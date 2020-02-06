@@ -1,9 +1,9 @@
 #vivado=/opt/Xilinx/Vivado/2015.3/bin/vivado
-project=amiga_ffm_a7100
+project=amiga_ffm_a7100_2017.4
 xc3sprog_interface = ft4232h_fast
 #xc3sprog_interface = ft4232h
 # name of resulting bitstream file (*.bit)
-bitfile=$(project).runs/impl_1/amiga_ffm_a7100.bit
+bitfile=$(project).runs/impl_1/amiga_ffm_a7100_2017.4.bit
 
 junk=*~
 junk+=.Xil vivado.log vivado.jou ip_upgrade.log

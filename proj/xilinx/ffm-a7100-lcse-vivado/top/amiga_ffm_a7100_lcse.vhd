@@ -327,11 +327,11 @@ begin
     n_joy2 => n_joy2,		
 		
     -- RS232
-    rs232_rxd => '1',
+    rs232_rxd => std_logic'('1'),
     rs232_txd => open,
 		
     -- ESP8266 wifi modem
-    amiga_rs232_rxd => '1',
+    amiga_rs232_rxd => std_logic'('1'),
     amiga_rs232_txd => open,
 		
     -- SD card interface
