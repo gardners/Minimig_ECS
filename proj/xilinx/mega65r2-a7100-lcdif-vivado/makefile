@@ -1,5 +1,5 @@
 #vivado=/opt/Xilinx/Vivado/2015.3/bin/vivado
-project=amiga_mega65r2_a100
+project=amiga_mega65r2_a7100_2017.4
 xc3sprog_interface = ft4232h_fast
 #xc3sprog_interface = ft4232h
 # name of resulting bitstream file (*.bit)
