@@ -24,7 +24,7 @@ set_property CONFIG_VOLTAGE 3.3 [current_design]
 #
 #	Clocks, resets & LEDs (no LEDs)
 #
-set_property -dict {PACKAGE_PIN V13 IOSTANDARD LVDS_25} [get_ports clk_100mhz]
+set_property -dict {PACKAGE_PIN V13 IOSTANDARD LVCMOS33} [get_ports clk_100mhz]
 create_clock -name {clk100}  [get_ports {clk_100mhz}] -period {10.000}  -add 
 
 #set_property -dict {PACKAGE_PIN V13 IOSTANDARD LVTTL} [get_ports PON_RESET_N]
