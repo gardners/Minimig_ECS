@@ -19,7 +19,7 @@ generic
 );
 port
 (
-  clk_100mhz_p, clk_100mhz_n: in std_logic;
+  clk_100mhz : in std_logic;
   -- RS232
   uart3_txd: out std_logic; -- rs232 txd
   uart3_rxd: in std_logic; -- rs232 rxd
@@ -27,19 +27,36 @@ port
   sd_m_clk, sd_m_cmd: out std_logic;
   sd_m_d: inout std_logic_vector(3 downto 0); 
   sd_m_cdet: in std_logic;
+
+  sys_reset : in std_logic;
+  DAC_L : out std_logic;
+  DAC_R : out std_logic;
+
+  -- Direct joystick lines
+  fa_left : in std_logic;
+  fa_right : in std_logic;
+  fa_up : in std_logic;
+  fa_down : in std_logic;
+  fa_fire : in std_logic;
+  fb_left : in std_logic;
+  fb_right : in std_logic;
+  fb_up : in std_logic;
+  fb_down : in std_logic;
+  fb_fire : in std_logic;
+  
   -- SDRAM
-  dr_clk: out std_logic;
-  dr_cke: out std_logic;
-  dr_cs_n: out std_logic;
-  dr_a: out std_logic_vector(12 downto 0);
-  dr_ba: out std_logic_vector(1 downto 0);
-  dr_ras_n, dr_cas_n: out std_logic;
-  dr_dqm: out std_logic_vector(3 downto 0);
-  dr_d: inout std_logic_vector(31 downto 0);
-  dr_we_n: out std_logic;
+--  dr_clk: out std_logic;
+--  dr_cke: out std_logic;
+--  dr_cs_n: out std_logic;
+--  dr_a: out std_logic_vector(12 downto 0);
+--  dr_ba: out std_logic_vector(1 downto 0);
+--  dr_ras_n, dr_cas_n: out std_logic;
+--  dr_dqm: out std_logic_vector(3 downto 0);
+--  dr_d: inout std_logic_vector(31 downto 0);
+--  dr_we_n: out std_logic;
   -- FFM Module IO
-  fioa: inout std_logic_vector(7 downto 0);
-  fiob: inout std_logic_vector(31 downto 20);
+--  fioa: inout std_logic_vector(7 downto 0);
+--  fiob: inout std_logic_vector(31 downto 20);
   -- ADV7513 video chip
   dv_clk: inout std_logic;
   dv_sda: inout std_logic;
@@ -53,25 +70,26 @@ port
   dv_i2s: inout std_logic_vector(3 downto 0);
   dv_sclk: inout std_logic;
   dv_lrclk: inout std_logic;
-  dv_d: inout std_logic_vector(23 downto 0);
+  dv_d: inout std_logic_vector(23 downto 0)
   -- Low-Cost HDMI video out
-  vid_d_p, vid_d_n: out std_logic_vector(3 downto 0)
+--  vid_d_p, vid_d_n: out std_logic_vector(3 downto 0)
 );
 end;
 
 architecture struct of amiga_mega65r2_a7100 is
+
+  -- XXX TODO: Route to MEGA65 keyboard interface
   -- keyboard
-  alias ps2_clk1 : std_logic is fioa(6);
-  alias ps2_data1 : std_logic is fioa(4);
+  signal ps2_clk1 : std_logic := '1';
+  signal ps2_data1 : std_logic := '1';
+  -- XXX TODO: Route to real joystick port???
   -- mouse
-  alias ps2_clk2 : std_logic is fioa(3);
-  alias ps2_data2 : std_logic is fioa(1);
+  signal ps2_clk2 : std_logic := '1';
+  signal ps2_data2 : std_logic := '1';
 
-  alias DAC_L: std_logic is fioa(2);
-  alias DAC_R: std_logic is fioa(0);
-
-  alias led_power: std_logic is fioa(5); -- green LED
-  alias led_floppy: std_logic is fioa(7); -- red LED
+  -- XXX TODO Route to MEGA65 keyboard interface
+  signal led_power: std_logic;
+  signal led_floppy: std_logic;
 
   signal LVDS_Red: std_logic_vector(0 downto 0);
   signal LVDS_Green: std_logic_vector(0 downto 0);
@@ -90,7 +108,6 @@ architecture struct of amiga_mega65r2_a7100 is
   alias mmc_miso: std_logic is sd_m_d(0);
   -- END ALIASING
 
-  signal clk_100MHz: std_logic; -- converted from differential to single ended
   signal clk_fb_main, clk_fb_sdram: std_logic; -- feedback internally used in clock generator
   signal clk: std_logic := '0';	
   signal clk7m: std_logic := '0';
@@ -162,7 +179,6 @@ architecture struct of amiga_mega65r2_a7100 is
   signal sw: std_logic_vector(3 downto 0) := (others => '1');
 begin
   -- btn(0) used as reset has inverted logic
-  sys_reset <= '1'; -- '1' is not reset, '0' is reset
   mmc_dat1 <= '1';
   mmc_dat2 <= '1';
 
@@ -170,19 +186,19 @@ begin
   -- (Note: comment out any of the following code lines if peripheral is required)
 
   -- Joystick bits(5-0) = fire2,fire,right,left,down,up mapped to GPIO header
-  n_joy1(3)<= fiob(20) ; -- up
-  n_joy1(2)<= fiob(21) ; -- down
-  n_joy1(1)<= fiob(22) ; -- left
-  n_joy1(0)<= fiob(23) ; -- right
-  n_joy1(4)<= fiob(24) ; -- fire
-  n_joy1(5)<= fiob(25) ; -- fire2
+  n_joy1(3)<= fa_up ; -- up
+  n_joy1(2)<= fa_down ; -- down
+  n_joy1(1)<= fa_left ; -- left
+  n_joy1(0)<= fa_right ; -- right
+  n_joy1(4)<= fa_fire ; -- fire
+  n_joy1(5)<= '1' ; -- fire2
 
-  n_joy2(3)<= fiob(26) ; -- up
-  n_joy2(2)<= fiob(27) ; -- down
-  n_joy2(1)<= fiob(28) ; -- left 
-  n_joy2(0)<= fiob(29) ; -- right  
-  n_joy2(4)<= fiob(30) ; -- fire
-  n_joy2(5)<= fiob(31) ; -- fire2 
+  n_joy2(3)<= fb_up ; -- up
+  n_joy2(2)<= fb_down ; -- down
+  n_joy2(1)<= fb_left ; -- left 
+  n_joy2(0)<= fb_right ; -- right  
+  n_joy2(4)<= fb_fire ; -- fire
+  n_joy2(5)<= '1' ; -- fire2 
 
   -- Video output horizontal scanrate select 15/30kHz select via GP[BIO header
   -- n_15khz <= GP(21) ; -- Default is 30kHz video out if pin left unconnected. Connect to GND for 15kHz video.
@@ -203,9 +219,6 @@ begin
   -- PS2_clk2 <= '0' when ps2m_clk_out='0' else 'Z';
   PS2_clk2 <= 'Z';
   
-  clkin_ibufgds: ibufgds
-  port map (I => clk_100MHz_P, IB => clk_100MHz_N, O => clk_100MHz);
-
   clk_main: mmcme2_base
   generic map
   (
@@ -223,7 +236,7 @@ begin
   (
     pwrdwn   => '0',
     rst      => '0',
-    clkin1   => clk_100MHz,
+    clkin1   => clk_100mhz,
     clkfbin  => clk_fb_main,
     clkfbout => clk_fb_main,
     clkout0  => clk,                --  112.5     MHz
