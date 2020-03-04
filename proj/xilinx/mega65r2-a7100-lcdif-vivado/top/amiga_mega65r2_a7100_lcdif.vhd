@@ -12,7 +12,7 @@ use IEEE.numeric_std.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity amiga_ffm_a7100 is
+entity amiga_mega65r2_a7100 is
 generic
 (
   C_dvid_ddr: boolean := true -- use vendor-specific DDR-differential output buffeers
@@ -59,7 +59,7 @@ port
 );
 end;
 
-architecture struct of amiga_ffm_a7100 is
+architecture struct of amiga_mega65r2_a7100 is
   -- keyboard
   alias ps2_clk1 : std_logic is fioa(6);
   alias ps2_data1 : std_logic is fioa(4);
