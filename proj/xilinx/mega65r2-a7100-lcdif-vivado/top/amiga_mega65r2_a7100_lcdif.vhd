@@ -98,8 +98,6 @@ architecture struct of amiga_mega65r2_a7100 is
   signal tmds_out_clk: std_logic;
   signal tmds_out_rgb: std_logic_vector(2 downto 0);
 
-  signal sys_reset: std_logic;
-
   alias mmc_dat1: std_logic is sd_m_d(1);
   alias mmc_dat2: std_logic is sd_m_d(2);
   alias mmc_n_cs: std_logic is sd_m_d(3);
@@ -247,26 +245,26 @@ begin
     locked   => pll_locked_main
   );
 
-  clk_sdram: mmcme2_base
-  generic map
-  (
-    clkin1_period    => 8.88888888, --   112.5    MHz (8.88888 ns)
-    clkfbout_mult_f  => 10.0,       --  1125.0    MHz *10 common multiply
-    divclk_divide    => 1,          --  1125.0    MHz /1  common divide
-    clkout0_divide_f => 10.0,       --  112.5     MHz /10 divide
-    clkout0_phase    => 144.0,      --            deg phase shift (multiple of 45/clkout0_divide_f = 4.5)
-    bandwidth        => "LOW"
-  )
-  port map
-  (
-    pwrdwn   => '0',
-    rst      => '0',
-    clkin1   => clk,
-    clkfbin  => clk_fb_sdram,
-    clkfbout => clk_fb_sdram,
-    clkout0  => dr_clk,             --  112.5     MHz phase shifted
-    locked   => pll_locked_sdram
-  );
+--  clk_sdram: mmcme2_base
+--  generic map
+--  (
+--    clkin1_period    => 8.88888888, --   112.5    MHz (8.88888 ns)
+--    clkfbout_mult_f  => 10.0,       --  1125.0    MHz *10 common multiply
+--    divclk_divide    => 1,          --  1125.0    MHz /1  common divide
+--    clkout0_divide_f => 10.0,       --  112.5     MHz /10 divide
+--    clkout0_phase    => 144.0,      --            deg phase shift (multiple of 45/clkout0_divide_f = 4.5)
+--    bandwidth        => "LOW"
+--  )
+--  port map
+--  (
+--    pwrdwn   => '0',
+--    rst      => '0',
+--    clkin1   => clk,
+--    clkfbin  => clk_fb_sdram,
+--    clkfbout => clk_fb_sdram,
+--    clkout0  => dr_clk,             --  112.5     MHz phase shifted
+--    locked   => pll_locked_sdram
+--  );
 
   reset_combo1 <= sys_reset and pll_locked_main and pll_locked_sdram;
 		
@@ -294,15 +292,15 @@ begin
     --oddled_out=>odd_leds(5), 
 
     -- SDRAM.  A separate shifted clock is provided by the toplevel
-    sdr_addr => dr_a,
-    sdr_data => dr_d(15 downto 0),
-    sdr_ba => dr_ba,
-    sdr_cke => dr_cke,
-    sdr_dqm => dr_dqm(1 downto 0),
-    sdr_cs => dr_cs_n,
-    sdr_we => dr_we_n,
-    sdr_cas => dr_cas_n, 
-    sdr_ras => dr_ras_n,
+--    sdr_addr => dr_a,
+--    sdr_data => dr_d(15 downto 0),
+--    sdr_ba => dr_ba,
+--    sdr_cke => dr_cke,
+--    sdr_dqm => dr_dqm(1 downto 0),
+--    sdr_cs => dr_cs_n,
+--    sdr_we => dr_we_n,
+--    sdr_cas => dr_cas_n, 
+--    sdr_ras => dr_ras_n,
 
     -- VGA 
     vga_r => red_u,
@@ -348,8 +346,8 @@ begin
     sd_clk => mmc_clk
   );
 
-  dr_d(31 downto 16) <= (others => 'Z');
-  dr_dqm(3 downto 2) <= (others => '1');
+--  dr_d(31 downto 16) <= (others => 'Z');
+--  dr_dqm(3 downto 2) <= (others => '1');
 
   no_spdif_audio: if false generate -- disable audio generation, doesn't fit on device
   S_audio(23 downto 9) <= leftdatasum(14 downto 0);
@@ -394,23 +392,23 @@ begin
       out_blue  => dvid_crgb(1 downto 0)
   );
 
-  G_dvi_sdr: if not C_dvid_ddr generate
-  -- no vendor specific DDR and differntial buffers
-  -- clk_pixel_shift = 10x clk_pixel
-  gpdi_sdr_se: for i in 0 to 3 generate
-    vid_d_p(i) <= dvid_crgb(2*i);
-    vid_d_n(i) <= not dvid_crgb(2*i);
-  end generate;
-  end generate;
+--  G_dvi_sdr: if not C_dvid_ddr generate
+--  -- no vendor specific DDR and differntial buffers
+--  -- clk_pixel_shift = 10x clk_pixel
+--  gpdi_sdr_se: for i in 0 to 3 generate
+--    vid_d_p(i) <= dvid_crgb(2*i);
+--    vid_d_n(i) <= not dvid_crgb(2*i);
+--  end generate;
+--  end generate;
 
-  G_dvi_ddr: if C_dvid_ddr generate
-  -- vendor specific DDR and differential buffers
-  -- clk_pixel_shift = 5x clk_pixel
-  gpdi_ddr_diff: for i in 0 to 3 generate
-    gpdi_ddr:   oddr generic map (DDR_CLK_EDGE => "SAME_EDGE", INIT => '0', SRTYPE => "SYNC") port map (D1=>dvid_crgb(2*i), D2=>dvid_crgb(2*i+1), Q=>ddr_d(i), C=>clk_pixel_shift, CE=>'1', R=>'0', S=>'0');
-    gpdi_diff:  obufds port map(i => ddr_d(i), o => vid_d_p(i), ob => vid_d_n(i));
-  end generate;
-  end generate;
+--  G_dvi_ddr: if C_dvid_ddr generate
+--  -- vendor specific DDR and differential buffers
+--  -- clk_pixel_shift = 5x clk_pixel
+--  gpdi_ddr_diff: for i in 0 to 3 generate
+--    gpdi_ddr:   oddr generic map (DDR_CLK_EDGE => "SAME_EDGE", INIT => '0', SRTYPE => "SYNC") port map (D1=>dvid_crgb(2*i), D2=>dvid_crgb(2*i+1), Q=>ddr_d(i), C=>clk_pixel_shift, CE=>'1', R=>'0', S=>'0');
+--    gpdi_diff:  obufds port map(i => ddr_d(i), o => vid_d_p(i), ob => vid_d_n(i));
+--  end generate;
+--  end generate;
 
     -- adv7513 routing
     dv_clk <= clk_pixel;
