@@ -32,11 +32,11 @@ port
   DAC_L : out std_logic;
   DAC_R : out std_logic;
 
-  vsync : out  STD_LOGIC;
-  hsync : out  STD_LOGIC;
-  vga_red : out  UNSIGNED (7 downto 0);
-  vga_green : out  UNSIGNED (7 downto 0);
-  vga_blue : out  UNSIGNED (7 downto 0);
+  vga_vsync : out  STD_LOGIC;
+  vga_hsync : out  STD_LOGIC;
+  vga_red : out  std_logic_vector (7 downto 0);
+  vga_green : out  std_logic_vector (7 downto 0);
+  vga_blue : out  std_logic_vector (7 downto 0);
   
   -- Direct joystick lines
   fa_left : in std_logic;
