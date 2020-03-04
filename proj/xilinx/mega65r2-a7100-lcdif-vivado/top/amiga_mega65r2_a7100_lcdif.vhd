@@ -428,9 +428,12 @@ begin
     dv_d(7 downto 4) <= blue_u;
     dv_d(3 downto 0) <= (others => blue_u(0));
 
-    vga_red <= red_u;
-    vga_green <= green_u;
-  vga_blue <= blue_u;
+  vga_red(7 downto 4) <= red_u;
+  vga_red(3 downto 0) <= (others => '0');
+    vga_green(7 downto 4) <= green_u;
+  vga_green(3 downto 0) <= (others => '0');
+  vga_blue(7 downto 4) <= blue_u;
+  vga_blue(3 downto 0) <= (others => '0');
   vga_hsync <= hsync;
   vga_vsync <= vsync;
   
