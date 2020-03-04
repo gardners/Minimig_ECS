@@ -32,6 +32,12 @@ port
   DAC_L : out std_logic;
   DAC_R : out std_logic;
 
+  vsync : out  STD_LOGIC;
+  hsync : out  STD_LOGIC;
+  vga_red : out  UNSIGNED (7 downto 0);
+  vga_green : out  UNSIGNED (7 downto 0);
+  vga_blue : out  UNSIGNED (7 downto 0);
+  
   -- Direct joystick lines
   fa_left : in std_logic;
   fa_right : in std_logic;
@@ -422,6 +428,12 @@ begin
     dv_d(7 downto 4) <= blue_u;
     dv_d(3 downto 0) <= (others => blue_u(0));
 
+    vga_red <= red_u;
+    vga_green <= green_u;
+  vga_blue <= blue_u;
+  vga_hsync <= hsync;
+  vga_vsync <= vsync;
+  
     i2c_send: entity work.i2c_sender
       port map
       (
