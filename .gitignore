@@ -45,3 +45,21 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# unpacked Minimig_ECS_Diamond_Project.zip
+Minimig_ECS/*
+jbboot.vhd
+osd_bootstrap.vhd
+
+# ISE output
+usage_statistics_webtalk.html
+proj/xilinx/nexys4ddr-ise/amiga/webtalk.log
+proj/xilinx/nexys4ddr-ise/amiga/webtalk_impact.xml
+proj/xilinx/nexys4ddr-ise/amiga/webtalk_pn.xml
+proj/xilinx/nexys4ddr-ise/amiga/iseconfig
+proj/xilinx/nexys4ddr-ise/amiga/_xmsgs
+proj/xilinx/nexys4ddr-ise/amiga/*.gise
+proj/xilinx/nexys4ddr-ise/amiga/*.html
+proj/xilinx/nexys4ddr-ise/amiga/work
+impact.xsl
+impact_impact.xwbt

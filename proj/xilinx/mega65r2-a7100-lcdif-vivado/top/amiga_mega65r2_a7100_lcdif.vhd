@@ -15,40 +15,45 @@ use unisim.vcomponents.all;
 entity amiga_mega65r2_a7100 is
 generic
 (
-  C_dvid_ddr: boolean := true -- use vendor-specific DDR-differential output buffeers
+  C_dvid_ddr: boolean := true -- use vendor-specific DDR-differential output buffers
 );
 port
 (
-  clk_100mhz : in std_logic;
+  clk_100mhz         : in std_logic;
+  
   -- RS232
-  uart3_txd: out std_logic; -- rs232 txd
-  uart3_rxd: in std_logic; -- rs232 rxd
+--  uart3_txd          : out std_logic; -- rs232 txd
+--  uart3_rxd          : in std_logic; -- rs232 rxd
+  
   -- SD card (SPI)
-  sd_m_clk, sd_m_cmd: out std_logic;
-  sd_m_d: inout std_logic_vector(3 downto 0); 
-  sd_m_cdet: in std_logic;
+  SD_RESET    : out std_logic;
+  SD_CLK      : out std_logic;
+  SD_MOSI     : out std_logic;
+  SD_MISO     : in std_logic;
+  SD_DAT      : out std_logic_vector(3 downto 1); 
 
-  sys_reset : in std_logic;
-  DAC_L : out std_logic;
-  DAC_R : out std_logic;
+--  sys_reset          : in std_logic;
+--  DAC_L              : out std_logic;
+--  DAC_R              : out std_logic;
 
-  vga_vsync : out  STD_LOGIC;
-  vga_hsync : out  STD_LOGIC;
-  vga_red : out  std_logic_vector (7 downto 0);
-  vga_green : out  std_logic_vector (7 downto 0);
-  vga_blue : out  std_logic_vector (7 downto 0);
+  -- VGA
+  vga_vsync          : out  STD_LOGIC;
+  vga_hsync          : out  STD_LOGIC;
+  vga_red            : out  std_logic_vector (3 downto 0);
+  vga_green          : out  std_logic_vector (3 downto 0);
+  vga_blue           : out  std_logic_vector (3 downto 0)
   
   -- Direct joystick lines
-  fa_left : in std_logic;
-  fa_right : in std_logic;
-  fa_up : in std_logic;
-  fa_down : in std_logic;
-  fa_fire : in std_logic;
-  fb_left : in std_logic;
-  fb_right : in std_logic;
-  fb_up : in std_logic;
-  fb_down : in std_logic;
-  fb_fire : in std_logic;
+--  fa_left : in std_logic;
+--  fa_right : in std_logic;
+--  fa_up : in std_logic;
+--  fa_down : in std_logic;
+--  fa_fire : in std_logic;
+--  fb_left : in std_logic;
+--  fb_right : in std_logic;
+--  fb_up : in std_logic;
+--  fb_down : in std_logic;
+--  fb_fire : in std_logic;
   
   -- SDRAM
 --  dr_clk: out std_logic;
@@ -60,25 +65,28 @@ port
 --  dr_dqm: out std_logic_vector(3 downto 0);
 --  dr_d: inout std_logic_vector(31 downto 0);
 --  dr_we_n: out std_logic;
+
   -- FFM Module IO
 --  fioa: inout std_logic_vector(7 downto 0);
 --  fiob: inout std_logic_vector(31 downto 20);
+
   -- ADV7513 video chip
-  dv_clk: inout std_logic;
-  dv_sda: inout std_logic;
-  dv_scl: inout std_logic;
-  dv_int: inout std_logic;
-  dv_de: inout std_logic;
-  dv_hsync: inout std_logic;
-  dv_vsync: inout std_logic;
-  dv_spdif: inout std_logic;
-  dv_mclk: inout std_logic;
-  dv_i2s: inout std_logic_vector(3 downto 0);
-  dv_sclk: inout std_logic;
-  dv_lrclk: inout std_logic;
-  dv_d: inout std_logic_vector(23 downto 0)
+--  dv_clk: inout std_logic;
+--  dv_sda: inout std_logic;
+--  dv_scl: inout std_logic;
+--  dv_int: inout std_logic;
+--  dv_de: inout std_logic;
+--  dv_hsync: inout std_logic;
+--  dv_vsync: inout std_logic;
+--  dv_spdif: inout std_logic;
+--  dv_mclk: inout std_logic;
+--  dv_i2s: inout std_logic_vector(3 downto 0);
+--  dv_sclk: inout std_logic;
+--  dv_lrclk: inout std_logic;
+--  dv_d: inout std_logic_vector(23 downto 0);
+  
   -- Low-Cost HDMI video out
---  vid_d_p, vid_d_n: out std_logic_vector(3 downto 0)
+--  vid_d_p, vid_d_n: out std_logic_vector(3 downto 0);
 );
 end;
 
@@ -104,12 +112,11 @@ architecture struct of amiga_mega65r2_a7100 is
   signal tmds_out_clk: std_logic;
   signal tmds_out_rgb: std_logic_vector(2 downto 0);
 
-  alias mmc_dat1: std_logic is sd_m_d(1);
-  alias mmc_dat2: std_logic is sd_m_d(2);
-  alias mmc_n_cs: std_logic is sd_m_d(3);
-  alias mmc_clk: std_logic is sd_m_clk;
-  alias mmc_mosi: std_logic is sd_m_cmd;
-  alias mmc_miso: std_logic is sd_m_d(0);
+  alias mmc_n_cs: std_logic is SD_RESET;
+  alias mmc_clk : std_logic is SD_CLK;
+  alias mmc_mosi: std_logic is SD_MOSI;
+  alias mmc_miso: std_logic is SD_MISO; 
+  
   -- END ALIASING
 
   signal clk_fb_main, clk_fb_sdram: std_logic; -- feedback internally used in clock generator
@@ -183,26 +190,24 @@ architecture struct of amiga_mega65r2_a7100 is
   signal sw: std_logic_vector(3 downto 0) := (others => '1');
 begin
   -- btn(0) used as reset has inverted logic
-  mmc_dat1 <= '1';
-  mmc_dat2 <= '1';
 
   -- Housekeeping logic for unwanted peripherals on FleaFPGA Ohm board goes here..
   -- (Note: comment out any of the following code lines if peripheral is required)
 
   -- Joystick bits(5-0) = fire2,fire,right,left,down,up mapped to GPIO header
-  n_joy1(3)<= fa_up ; -- up
-  n_joy1(2)<= fa_down ; -- down
-  n_joy1(1)<= fa_left ; -- left
-  n_joy1(0)<= fa_right ; -- right
-  n_joy1(4)<= fa_fire ; -- fire
-  n_joy1(5)<= '1' ; -- fire2
+--  n_joy1(3)<= fa_up ; -- up
+--  n_joy1(2)<= fa_down ; -- down
+--  n_joy1(1)<= fa_left ; -- left
+--  n_joy1(0)<= fa_right ; -- right
+--  n_joy1(4)<= fa_fire ; -- fire
+--  n_joy1(5)<= '1' ; -- fire2
 
-  n_joy2(3)<= fb_up ; -- up
-  n_joy2(2)<= fb_down ; -- down
-  n_joy2(1)<= fb_left ; -- left 
-  n_joy2(0)<= fb_right ; -- right  
-  n_joy2(4)<= fb_fire ; -- fire
-  n_joy2(5)<= '1' ; -- fire2 
+--  n_joy2(3)<= fb_up ; -- up
+--  n_joy2(2)<= fb_down ; -- down
+--  n_joy2(1)<= fb_left ; -- left 
+--  n_joy2(0)<= fb_right ; -- right  
+--  n_joy2(4)<= fb_fire ; -- fire
+--  n_joy2(5)<= '1' ; -- fire2 
 
   -- Video output horizontal scanrate select 15/30kHz select via GP[BIO header
   -- n_15khz <= GP(21) ; -- Default is 30kHz video out if pin left unconnected. Connect to GND for 15kHz video.
@@ -272,7 +277,7 @@ begin
 --    locked   => pll_locked_sdram
 --  );
 
-  reset_combo1 <= sys_reset and pll_locked_main and pll_locked_sdram;
+--  reset_combo1 <= sys_reset and pll_locked_main and pll_locked_sdram;
 		
   u10 : entity work.poweronreset
   port map
@@ -328,8 +333,8 @@ begin
     ps2m_dat_out => ps2m_dat_out,
 
     -- Audio
-    sigmaL => DAC_L,
-    sigmaR => DAC_R,
+--    sigmaL => DAC_L,
+--    sigmaR => DAC_R,
     leftdatasum => leftdatasum,
     rightdatasum => rightdatasum,
 
@@ -417,33 +422,36 @@ begin
 --  end generate;
 
     -- adv7513 routing
-    dv_clk <= clk_pixel;
-    dv_de <= not videoblank;
-    dv_hsync <= hsync;
-    dv_vsync <= vsync;
-    dv_d(23 downto 20) <= red_u;
-    dv_d(19 downto 16) <= (others => red_u(0));
-    dv_d(15 downto 12) <= green_u;
-    dv_d(11 downto 8) <= (others => green_u(0));
-    dv_d(7 downto 4) <= blue_u;
-    dv_d(3 downto 0) <= (others => blue_u(0));
+--    dv_clk <= clk_pixel;
+--    dv_de <= not videoblank;
+--    dv_hsync <= hsync;
+--    dv_vsync <= vsync;
+--    dv_d(23 downto 20) <= red_u;
+--    dv_d(19 downto 16) <= (others => red_u(0));
+--    dv_d(15 downto 12) <= green_u;
+--    dv_d(11 downto 8) <= (others => green_u(0));
+--    dv_d(7 downto 4) <= blue_u;
+--    dv_d(3 downto 0) <= (others => blue_u(0));
 
-  vga_red(7 downto 4) <= red_u;
-  vga_red(3 downto 0) <= (others => '0');
-    vga_green(7 downto 4) <= green_u;
-  vga_green(3 downto 0) <= (others => '0');
-  vga_blue(7 downto 4) <= blue_u;
-  vga_blue(3 downto 0) <= (others => '0');
-  vga_hsync <= hsync;
-  vga_vsync <= vsync;
+--    vga_red(7 downto 4)    <= (others => '0');
+    vga_red(3 downto 0)    <= red_u;
+--    vga_green(7 downto 4)  <= (others => '0');
+    vga_green(3 downto 0)  <= green_u;
+--    vga_blue(7 downto 4)   <= (others => '0');
+    vga_blue(3 downto 0)   <= blue_u;
+    vga_hsync              <= hsync;
+    vga_vsync              <= vsync;
+    
+   -- pull DAT1, DAT2 and DAT3 to GND (Nexys' pull-ups by default pull to VDD)
+   SD_DAT <= "000";    
   
-    i2c_send: entity work.i2c_sender
-      port map
-      (
-        clk => clk_pixel,
-        resend => reset,
-        sioc => dv_scl,
-        siod => dv_sda
-      );
+--    i2c_send: entity work.i2c_sender
+--      port map
+--      (
+--        clk => clk_pixel,
+--        resend => reset,
+--        sioc => dv_scl,
+--        siod => dv_sda
+--      );
 
 end struct;

@@ -31,3 +31,7 @@ load *.adf files and change Minimig emulation parameters.
 
 OSD menu is running on auxililary 68k CPU. It's source is here:
 [minimig_tc64](https://github.com/robinsonb5/minimig_tc64)
+
+# WIP
+
+* Run `unzip_clean_generic.sh` to unzip the core source files.
