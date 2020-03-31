@@ -152,14 +152,17 @@ module Minimig1
 	output	n_cpu_dtack,			// m68k data acknowledge
 	output	n_cpu_reset,			// m68k reset
 //	input	cpu_clk,			// m68k clock
+
 	// sram pins
-	output	[15:0] ram_data,	// sram data bus
-	output	[21:1] ram_address,	// sram address bus
-	output	[3:0] n_ram_ce,		// sram chip enable
-	output	n_ram_bhe,			// sram upper byte select
-	output	n_ram_ble,			// sram lower byte select
-	output	n_ram_we,			// sram write enable
-	output	n_ram_oe,			// sram output enable
+	output	[15:0]   ram_data,	   // sram data bus
+	input	   [15:0]   ramdata_in,		// sram data bus in
+	output	[21:1]   ram_address,	// sram address bus
+	output	[3:0]    n_ram_ce,		// sram chip enable
+	output	         n_ram_bhe,	   // sram upper byte select
+	output	         n_ram_ble,		// sram lower byte select
+	output	         n_ram_we,		// sram write enable
+	output	         n_ram_oe,		// sram output enable
+   
 	// system	pins
 //	input	mclk,				// master system clock (4.433619MHz)
 	input	clk,				// system clock (7.09379 MHz)
@@ -209,9 +212,9 @@ module Minimig1
 	output	floppyled,
 	// unused pins
 	output	init_b,				// vertical sync for MCU (sync OSD update)
-	input	[15:0]ramdata_in,		//sram data bus in
-	input	cpurst,
-	input	locked,				// PLL ready
+	input	   cpurst,
+   input	   locked,			   // PLL ready
+      
 	input	sysclock,
 	input [8:0]ascancode,
 	input	[5:0]n_joy3,			// joystick 3 [fire2,fire,right,left,down,up] (joystick port)

@@ -19,18 +19,19 @@ generic
 );
 port
 (
-  clk_100mhz         : in std_logic;
-  
+   clk_100mhz     : in std_logic;
+    
+   -- SD card (SPI)
+   SD_RESET       : out std_logic;
+   SD_CLK         : out std_logic;
+   SD_MOSI        : out std_logic;
+   SD_MISO        : in std_logic;
+   SD_DAT         : out std_logic_vector(3 downto 1); 
+   
   -- RS232
 --  uart3_txd          : out std_logic; -- rs232 txd
 --  uart3_rxd          : in std_logic; -- rs232 rxd
-  
-  -- SD card (SPI)
-  SD_RESET    : out std_logic;
-  SD_CLK      : out std_logic;
-  SD_MOSI     : out std_logic;
-  SD_MISO     : in std_logic;
-  SD_DAT      : out std_logic_vector(3 downto 1); 
+   
 
 --  sys_reset          : in std_logic;
 --  DAC_L              : out std_logic;
@@ -188,6 +189,18 @@ architecture struct of amiga_mega65r2_a7100 is
   alias clkn_pixel_shift: std_logic is clk_dvin;
   -- end emard AV
   signal sw: std_logic_vector(3 downto 0) := (others => '1');
+   
+  
+   signal sram_in       : std_logic_vector(15 downto 0);
+   signal sram_out      : std_logic_vector(15 downto 0);
+   signal ram_address	: std_logic_vector(21 downto 1);
+   signal n_ram_ce		: std_logic_vector(3 downto 0);
+   signal n_ram_bhe		: std_logic;
+   signal n_ram_ble		: std_logic;
+   signal n_ram_we		: std_logic;
+   signal n_ram_oe		: std_logic;
+    
+  
 begin
   -- btn(0) used as reset has inverted logic
 
@@ -255,29 +268,6 @@ begin
     clkout4  => open,               --  281.25    MHz
     locked   => pll_locked_main
   );
-
---  clk_sdram: mmcme2_base
---  generic map
---  (
---    clkin1_period    => 8.88888888, --   112.5    MHz (8.88888 ns)
---    clkfbout_mult_f  => 10.0,       --  1125.0    MHz *10 common multiply
---    divclk_divide    => 1,          --  1125.0    MHz /1  common divide
---    clkout0_divide_f => 10.0,       --  112.5     MHz /10 divide
---    clkout0_phase    => 144.0,      --            deg phase shift (multiple of 45/clkout0_divide_f = 4.5)
---    bandwidth        => "LOW"
---  )
---  port map
---  (
---    pwrdwn   => '0',
---    rst      => '0',
---    clkin1   => clk,
---    clkfbin  => clk_fb_sdram,
---    clkfbout => clk_fb_sdram,
---    clkout0  => dr_clk,             --  112.5     MHz phase shifted
---    locked   => pll_locked_sdram
---  );
-
---  reset_combo1 <= sys_reset and pll_locked_main and pll_locked_sdram;
 		
   u10 : entity work.poweronreset
   port map
@@ -290,28 +280,42 @@ begin
 
   led_floppy <= not diskoff; -- LED at EXPMOD PS/2 adapter
   led_power <= reset_n; -- LED at EXPMOD PS/2 adapter
+  
+   sram : entity work.sram_bram
+   port map
+   (
+      clk => clk_100mhz,
+      sram_out => sram_out,
+      sram_in => sram_in,
+      ram_address => ram_address,
+      n_ram_ce => n_ram_ce,
+      n_ram_bhe => n_ram_bhe,
+      n_ram_ble => n_ram_ble,
+      n_ram_we => n_ram_we,
+      n_ram_oe => n_ram_oe      
+   );
+
 
   myFampiga: entity work.Fampiga
   port map
   (
-    clk=> clk,
-    clk7m=> clk7m,
-    clk28m=> clk28m,
-    reset_n=>reset_n,
+    clk => clk,
+    clk7m => clk7m,
+    clk28m => clk28m,
+    reset_n => reset_n,
     --powerled_out=>power_leds(5 downto 4),
-    diskled_out=>diskoff,
+    diskled_out => diskoff,
     --oddled_out=>odd_leds(5), 
 
-    -- SDRAM.  A separate shifted clock is provided by the toplevel
---    sdr_addr => dr_a,
---    sdr_data => dr_d(15 downto 0),
---    sdr_ba => dr_ba,
---    sdr_cke => dr_cke,
---    sdr_dqm => dr_dqm(1 downto 0),
---    sdr_cs => dr_cs_n,
---    sdr_we => dr_we_n,
---    sdr_cas => dr_cas_n, 
---    sdr_ras => dr_ras_n,
+    -- SRAM
+    ram_data => sram_in, 		   
+    ramdata_in	=>	sram_out,
+    ram_address => ram_address,
+    n_ram_ce => n_ram_ce,
+    n_ram_bhe => n_ram_bhe,
+    n_ram_ble => n_ram_ble,
+    n_ram_we => n_ram_we,
+    n_ram_oe => n_ram_oe,
 
     -- VGA 
     vga_r => red_u,

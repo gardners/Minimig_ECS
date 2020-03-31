@@ -61,5 +61,8 @@ proj/xilinx/nexys4ddr-ise/amiga/_xmsgs
 proj/xilinx/nexys4ddr-ise/amiga/*.gise
 proj/xilinx/nexys4ddr-ise/amiga/*.html
 proj/xilinx/nexys4ddr-ise/amiga/work
+proj/xilinx/nexys4ddr-ise/amiga/amiga_xdb
 impact.xsl
 impact_impact.xwbt
+amiga.ipf
+
