@@ -28,21 +28,27 @@ port
    SD_MISO        : in std_logic;
    SD_DAT         : out std_logic_vector(3 downto 1); 
    
-  -- RS232
---  uart3_txd          : out std_logic; -- rs232 txd
---  uart3_rxd          : in std_logic; -- rs232 rxd
+   -- RS232
+   uart3_txd      : out std_logic;        -- rs232 txd
+   uart3_rxd      : in std_logic;         -- rs232 rxd
    
-
---  sys_reset          : in std_logic;
+   BTN_RESET_N    : in std_logic;
+  
 --  DAC_L              : out std_logic;
 --  DAC_R              : out std_logic;
 
   -- VGA
   vga_vsync          : out  STD_LOGIC;
   vga_hsync          : out  STD_LOGIC;
-  vga_red            : out  std_logic_vector (3 downto 0);
-  vga_green          : out  std_logic_vector (3 downto 0);
-  vga_blue           : out  std_logic_vector (3 downto 0)
+  vga_red            : out  std_logic_vector(3 downto 0);
+  vga_green          : out  std_logic_vector(3 downto 0);
+  vga_blue           : out  std_logic_vector(3 downto 0);
+
+   -- 7 segment display needs multiplexed approach due to common anode
+   SSEG_AN           : out std_logic_vector(7 downto 0);   -- common anode: selects digit
+   SSEG_CA           : out std_logic_vector(7 downto 0);   -- cathode: selects segment within a digit
+   
+   led               : out std_logic_vector(15 downto 0)
   
   -- Direct joystick lines
 --  fa_left : in std_logic;
@@ -273,7 +279,7 @@ begin
   port map
   ( 
     clk => clk,
-    reset_button => reset_combo1,
+    reset_button => BTN_RESET_N,
     reset_out => reset_n
   );
   reset <= not reset_n;
@@ -292,7 +298,9 @@ begin
       n_ram_bhe => n_ram_bhe,
       n_ram_ble => n_ram_ble,
       n_ram_we => n_ram_we,
-      n_ram_oe => n_ram_oe      
+      n_ram_oe => n_ram_oe,
+      SSEG_AN => SSEG_AN,
+      SSEG_CA => SSEG_CA
    );
 
 
@@ -347,18 +355,21 @@ begin
     n_joy2 => n_joy2,		
 		
     -- RS232
-    rs232_rxd => '1',
-    rs232_txd => open,
+    rs232_rxd => uart3_rxd,
+    rs232_txd => uart3_txd,
 		
     -- ESP8266 wifi modem
-    amiga_rs232_rxd => '1',
-    amiga_rs232_txd => open,
+--    amiga_rs232_rxd => '1',
+--    amiga_rs232_txd => open,
 		
     -- SD card interface
     sd_cs => mmc_n_cs,
     sd_miso => mmc_miso,
     sd_mosi => mmc_mosi,
-    sd_clk => mmc_clk
+    sd_clk => mmc_clk,
+    
+    led => led
+    
   );
 
 --  dr_d(31 downto 16) <= (others => 'Z');

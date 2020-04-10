@@ -57,14 +57,16 @@ port(
 		rs232_txd : out std_logic;
 		
 		-- ESP8266 wifi modem
-		amiga_rs232_rxd : in std_logic;
-		amiga_rs232_txd : out std_logic;
+		-- amiga_rs232_rxd : in std_logic;
+		-- amiga_rs232_txd : out std_logic;
 
 		-- SD card interface
 		sd_cs : out std_logic; 
 		sd_miso : in std_logic;
 		sd_mosi : out std_logic;
-		sd_clk : out std_logic
+		sd_clk : out std_logic;
+
+      led : out std_logic_vector(15 downto 0)
 
 		-- FIXME - add joystick ports
 	);
@@ -260,8 +262,8 @@ MyMinimig: COMPONENT Minimig1
 		
 		-- Peripherals
 		
-		rxd => amiga_rs232_rxd,
-		txd => amiga_rs232_txd,
+		rxd => rs232_rxd,
+		txd => rs232_txd,
 		--rxd => '1',
 		--txd => open,
 		cts => '0',
@@ -312,7 +314,13 @@ MyMinimig: COMPONENT Minimig1
 		n_joy4	=> "111111"
 	);
 	
-	cpu_reset1 <= not (maincpuready and n_cpu_reset);
+   led(0) <= n_cpu_reset;
+   led(1) <= maincpuready;
+   led(2) <= cpu_reset1;
+   led(3) <= sysreset;
+   led(15 downto 4) <= (others => '0');
+   
+	cpu_reset1 <= not (maincpuready and n_cpu_reset and reset_n);
 	sysreset <= n_cpu_reset;
 	 
 MainCPU: entity work.TG68K
@@ -368,7 +376,7 @@ MainCPU: entity work.TG68K
 mycfide : entity work.cfide 
    port map ( 
 		sysclk => clk,
-		n_reset => '1',
+		n_reset => reset_n,
 		cpuena_in => hostena_in,
 		memdata_in => hostRD,
 		addr => hostaddr,
@@ -389,14 +397,14 @@ mycfide : entity work.cfide
 		sd_do => spi_sdi,
 		sd_dimm => sd_miso,
 		enaWRreg => enaWRreg,
-		debugTxD => rs232_txd,
-		debugRxD => rs232_rxd
+		debugTxD => open,
+		debugRxD => '1'
    );
    
 clk_enablez <= hostena and enaWRreg;
 myhostcpu : entity work.TG68KdotC_Kernel
    port map(clk => clk,
-		nReset => '1',
+		nReset => reset_n,
 		clkena_in => clk_enablez,
 		data_in => hostdata,
 		addr(23 downto 0) => hostaddr, 
