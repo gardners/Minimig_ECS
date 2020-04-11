@@ -46,23 +46,25 @@ port (
    chipL       : in std_logic;                        -- SRAM lower byte select
    chipRW      : in std_logic;                        -- SRAM write enable
    chip_dma    : in std_logic;                        -- SRAM output enable
-
-   hostWR		: in std_logic_vector(15 downto 0);
+   
+   -- OSD CPU's SRAM data bus
    hostAddr	   : in std_logic_vector(23 downto 0);
-   hostState	: in std_logic_vector(2 downto 0);
-   hostL		   : in std_logic;
+   hostWR		: in std_logic_vector(15 downto 0);
+	hostRD		: out std_logic_vector(15 downto 0);
    hostU		   : in std_logic;
-   cpuWR		   : in std_logic_vector(15 downto 0);
+   hostL		   : in std_logic;
+	hostena		: buffer std_logic;
+   hostState	: in std_logic_vector(2 downto 0);
+
    cpuAddr		: in std_logic_vector(24 downto 1);
+   cpuWR		   : in std_logic_vector(15 downto 0);
+	cpuRD		   : out std_logic_vector(15 downto 0);
    cpuU		   : in std_logic;
    cpuL		   : in std_logic;
    cpustate	   : in std_logic_vector(5 downto 0); -- clkena & slower(1 downto 0) & ramcs & state;
+	cpuena		: out std_logic;   
    cpu_dma		: in std_logic;
 	
-	hostRD		: out std_logic_vector(15 downto 0);
-	hostena		: buffer std_logic;
-	cpuRD		   : out std_logic_vector(15 downto 0);
-	cpuena		: out std_logic;
 	reset_out	: out std_logic;
 	enaRDreg	   : out std_logic;
 	enaWRreg	   : buffer std_logic;
