@@ -19,29 +19,35 @@ generic
 );
 port
 (
-  clk_100mhz         : in std_logic;
+   clk_100mhz         : in std_logic;
+   
+   BTN_RESET_N        : in std_logic;
+   
+   -- debug: 7 segment display needs multiplexed approach due to common anode
+   SSEG_AN     : out std_logic_vector (7 downto 0);   -- common anode: selects digit
+   SSEG_CA     : out std_logic_vector (7 downto 0);   -- cathode: selects segment within a digit      
+     
+   -- SD card (SPI)
+   SD_RESET    : out std_logic;
+   SD_CLK      : out std_logic;
+   SD_MOSI     : out std_logic;
+   SD_MISO     : in std_logic;
+   SD_DAT      : out std_logic_vector(3 downto 1); 
+
+   -- VGA
+   vga_vsync          : out  STD_LOGIC;
+   vga_hsync          : out  STD_LOGIC;
+   vga_red            : out  std_logic_vector (3 downto 0);
+   vga_green          : out  std_logic_vector (3 downto 0);
+   vga_blue           : out  std_logic_vector (3 downto 0)
   
   -- RS232
 --  uart3_txd          : out std_logic; -- rs232 txd
 --  uart3_rxd          : in std_logic; -- rs232 rxd
   
-  -- SD card (SPI)
-  SD_RESET    : out std_logic;
-  SD_CLK      : out std_logic;
-  SD_MOSI     : out std_logic;
-  SD_MISO     : in std_logic;
-  SD_DAT      : out std_logic_vector(3 downto 1); 
-
---  sys_reset          : in std_logic;
 --  DAC_L              : out std_logic;
 --  DAC_R              : out std_logic;
 
-  -- VGA
-  vga_vsync          : out  STD_LOGIC;
-  vga_hsync          : out  STD_LOGIC;
-  vga_red            : out  std_logic_vector (3 downto 0);
-  vga_green          : out  std_logic_vector (3 downto 0);
-  vga_blue           : out  std_logic_vector (3 downto 0)
   
   -- Direct joystick lines
 --  fa_left : in std_logic;
@@ -55,17 +61,6 @@ port
 --  fb_down : in std_logic;
 --  fb_fire : in std_logic;
   
-  -- SDRAM
---  dr_clk: out std_logic;
---  dr_cke: out std_logic;
---  dr_cs_n: out std_logic;
---  dr_a: out std_logic_vector(12 downto 0);
---  dr_ba: out std_logic_vector(1 downto 0);
---  dr_ras_n, dr_cas_n: out std_logic;
---  dr_dqm: out std_logic_vector(3 downto 0);
---  dr_d: inout std_logic_vector(31 downto 0);
---  dr_we_n: out std_logic;
-
   -- FFM Module IO
 --  fioa: inout std_logic_vector(7 downto 0);
 --  fiob: inout std_logic_vector(31 downto 20);
@@ -256,28 +251,28 @@ begin
     locked   => pll_locked_main
   );
 
---  clk_sdram: mmcme2_base
---  generic map
---  (
---    clkin1_period    => 8.88888888, --   112.5    MHz (8.88888 ns)
---    clkfbout_mult_f  => 10.0,       --  1125.0    MHz *10 common multiply
---    divclk_divide    => 1,          --  1125.0    MHz /1  common divide
---    clkout0_divide_f => 10.0,       --  112.5     MHz /10 divide
---    clkout0_phase    => 144.0,      --            deg phase shift (multiple of 45/clkout0_divide_f = 4.5)
---    bandwidth        => "LOW"
---  )
---  port map
---  (
---    pwrdwn   => '0',
---    rst      => '0',
---    clkin1   => clk,
---    clkfbin  => clk_fb_sdram,
---    clkfbout => clk_fb_sdram,
---    clkout0  => dr_clk,             --  112.5     MHz phase shifted
---    locked   => pll_locked_sdram
---  );
+  clk_sdram: mmcme2_base
+  generic map
+  (
+    clkin1_period    => 8.88888888, --   112.5    MHz (8.88888 ns)
+    clkfbout_mult_f  => 10.0,       --  1125.0    MHz *10 common multiply
+    divclk_divide    => 1,          --  1125.0    MHz /1  common divide
+    clkout0_divide_f => 10.0,       --  112.5     MHz /10 divide
+    clkout0_phase    => 144.0,      --            deg phase shift (multiple of 45/clkout0_divide_f = 4.5)
+    bandwidth        => "LOW"
+  )
+  port map
+  (
+    pwrdwn   => '0',
+    rst      => '0',
+    clkin1   => clk,
+    clkfbin  => clk_fb_sdram,
+    clkfbout => clk_fb_sdram,
+    clkout0  => open,               --  112.5     MHz phase shifted
+    locked   => pll_locked_sdram
+  );
 
---  reset_combo1 <= sys_reset and pll_locked_main and pll_locked_sdram;
+  reset_combo1 <= BTN_RESET_N and pll_locked_main and pll_locked_sdram;
 		
   u10 : entity work.poweronreset
   port map
@@ -302,16 +297,9 @@ begin
     diskled_out=>diskoff,
     --oddled_out=>odd_leds(5), 
 
-    -- SDRAM.  A separate shifted clock is provided by the toplevel
---    sdr_addr => dr_a,
---    sdr_data => dr_d(15 downto 0),
---    sdr_ba => dr_ba,
---    sdr_cke => dr_cke,
---    sdr_dqm => dr_dqm(1 downto 0),
---    sdr_cs => dr_cs_n,
---    sdr_we => dr_we_n,
---    sdr_cas => dr_cas_n, 
---    sdr_ras => dr_ras_n,
+    -- debug: 7 segment display needs multiplexed approach due to common anode
+    SSEG_AN => SSEG_AN,
+    SSEG_CA => SSEG_CA,
 
     -- VGA 
     vga_r => red_u,
