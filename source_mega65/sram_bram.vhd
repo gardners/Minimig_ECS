@@ -16,7 +16,6 @@ port(
    sram_out		   : out std_logic_vector(15 downto 0); -- sram data bus out
    
    ram_address		: in std_logic_vector(21 downto 1); -- sram address bus 
-   n_ram_ce		   : in std_logic_vector(3 downto 0);  -- sram chip enable
    n_ram_bhe		: in std_logic;                     -- sram upper byte select
    n_ram_ble		: in std_logic;                     -- sram lower byte select
    n_ram_we		   : in std_logic;                     -- sram write enable
@@ -30,7 +29,9 @@ end sram_bram;
 
 architecture Behavioral of sram_bram is
 
-type ram_t is array (0 to 262143) of std_logic_vector(15 downto 0);
+--constant ramsize : integer := 262143; -- 256k words 512 KB
+constant ramsize : integer := 61439 + 3 * 1024;
+type ram_t is array (0 to ramsize) of std_logic_vector(15 downto 0);
 signal ram : ram_t := (others => x"0000");
 
 signal trigger_display : std_logic;
@@ -73,7 +74,6 @@ begin
    begin
       if rising_edge(clk) then
          -- write      
---         if n_ram_we = '0' and n_ram_ce(0) = '0' then
          if n_ram_we = '0' then         
             if n_ram_bhe = '0' then
                ram(conv_integer(ram_address(18 downto 1)))(15 downto 8) <= sram_in(15 downto 8);
@@ -94,7 +94,7 @@ begin
    
    ram_read_delay : SyTargetCounter
       generic map (
-         COUNTER_FINISH => 50000000,
+         COUNTER_FINISH => 30000000,
          COUNTER_WIDTH => 26
       )
       port map (
@@ -113,7 +113,7 @@ begin
       
    segdisplay : drive_7digits
       generic map (
-         CLOCK_DIVIDER => 200000
+         CLOCK_DIVIDER => 100000
       )
       port map (
          clk => clk,
