@@ -67,5 +67,12 @@ vivado/mega65r2_gen.tcl:	$(TOOLDIR)/gen_gen.sh
 	$(TOOLDIR)/gen_gen.sh mega65r2 > vivado/mega65r2_gen.tcl
 
 clean:
-	rm -rf vivado/{mega65r2,megaphoner1}.{cache,runs,hw,ip_user_files,srcs,xpr}
+	rm -rf vivado/mega65r2.cache
+	rm -rf vivado/mega65r2.runs
+	rm -rf vivado/mega65r2.hw
+	rm -rf vivado/mega65r2.runs,hw
+	rm -rf vivado/mega65r2.ip_user_files
+	rm -rf vivado/mega65r2.srcs
+	rm -rf vivado/mega65r2.xpr
+	rm -rf vivado/mega65r2_gen.tcl
 
