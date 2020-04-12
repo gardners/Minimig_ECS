@@ -12,6 +12,7 @@ ASSETS=		assets
 SRCDIR=		src
 BINDIR=		bin
 UTILDIR=	$(SRCDIR)/utilities
+TOOLDIR=	$(SRCDIR)/tools
 TESTDIR=	$(SRCDIR)/tests
 VHDLSRCDIR=	$(SRCDIR)/vhdl
 VERILOGSRCDIR=	$(SRCDIR)/verilog
@@ -61,6 +62,9 @@ $(BINDIR)/%.bit: 	vivado/%.xpr $(VHDLSRCDIR)/*.vhdl $(VHDLSRCDIR)/*.xdc $(VERILO
 $(BINDIR)/%.mcs:	$(BINDIR)/%.bit
 	mkdir -p $(SDCARD_DIR)
 	$(VIVADO) -mode batch -source vivado/run_mcs.tcl -tclargs $< $@
+
+vivado/mega65r2_gen.tcl:	$(TOOLDIR)/gen_gen.sh
+	$(TOOLDIR)/gen_gen.sh mega65r2 > vivado/mega65r2_gen.tcl
 
 clean:
 	rm -rf vivado/{mega65r2,megaphoner1}.{cache,runs,hw,ip_user_files,srcs,xpr}
