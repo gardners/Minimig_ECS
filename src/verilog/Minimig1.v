@@ -1149,11 +1149,13 @@ module sram_bridge
 //	output	reg [3:0] _ce = 4'b1111,	// sram chip enable
 //	output	reg [19:1] address,			// sram address bus
 //	inout	[15:0] data		  			// sram data das
-	output	_bhe = 1,				// sram upper byte
-	output	_ble = 1,   				// sram lower byte
-	output	_we = 1,				// sram write enable
-	output	_oe = 1,				// sram output enable
-	output	[3:0] _ce = 4'b1111,	// sram chip enable
+//	PGS 20200413 - Removed initialisation of these signals to 1, to avoid
+//	Vivado synthesis errors.
+	output	_bhe,				// sram upper byte
+	output	_ble,   				// sram lower byte
+	output	_we,				// sram write enable
+	output	_oe,				// sram output enable
+	output	[3:0] _ce,	// sram chip enable
 	output	[21:1] address,			// sram address bus
 	output	[15:0] data,	  			// sram data das
 	input	[15:0] ramdata_in	  		// sram data das in
@@ -1167,7 +1169,7 @@ phase          : Q0  : Q1  : Q2  : Q3  : Q0  : Q1  : Q2  : Q3  : Q0  : Q1  :
 clk			___/           \___________/           \___________/           \_____ (7.09 MHz - dedicated clock)
 
                :     :     :     :     :     :     :     :     :     :     :
-			    __    __    __    __    __    __    __    __    __    __    __
+		    __    __    __    __    __    __    __    __    __    __    __
 clk28m		___/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__/  \__ (28.36 MHz - dedicated clock)
                :     :     :     :     :     :     :     :     :     :     :
 			    ___________             ___________             ___________
