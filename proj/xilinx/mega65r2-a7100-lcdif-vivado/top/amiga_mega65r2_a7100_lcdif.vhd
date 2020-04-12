@@ -55,11 +55,11 @@ port
    ddr2_odt             : out   std_logic_vector(0 downto 0);
    ddr2_dq              : inout std_logic_vector(15 downto 0);
    ddr2_dqs_p           : inout std_logic_vector(1 downto 0);
-   ddr2_dqs_n           : inout std_logic_vector(1 downto 0)
+   ddr2_dqs_n           : inout std_logic_vector(1 downto 0);
    
   -- RS232
---  uart3_txd          : out std_logic; -- rs232 txd
---  uart3_rxd          : in std_logic; -- rs232 rxd
+  uart3_txd          : out std_logic;     -- rs232 txd
+  uart3_rxd          : in std_logic       -- rs232 rxd
   
 --  DAC_L              : out std_logic;
 --  DAC_R              : out std_logic;
@@ -354,8 +354,8 @@ begin
     n_joy2 => n_joy2,		
 		
     -- RS232
-    rs232_rxd => '1',
-    rs232_txd => open,
+    rs232_rxd => uart3_rxd,
+    rs232_txd => uart3_txd,
 		
     -- ESP8266 wifi modem
     amiga_rs232_rxd => '1',

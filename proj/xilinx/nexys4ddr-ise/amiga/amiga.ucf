@@ -36,8 +36,8 @@ NET "sd_dat<3>"            LOC = D2  | IOSTANDARD = LVCMOS33;
 #NET "sd_cd"                LOC = A1  | IOSTANDARD = LVCMOS33;
 
 ## USB-RS232 Interface
-#NET "uart3_rxd"            LOC = C4  | IOSTANDARD = LVCMOS33;
-#NET "uart3_txd"            LOC = D4  | IOSTANDARD = LVCMOS33;
+NET "uart3_rxd"            LOC = C4  | IOSTANDARD = LVCMOS33;
+NET "uart3_txd"            LOC = D4  | IOSTANDARD = LVCMOS33;
 
 ## Reset button
 NET "BTN_RESET_N"          LOC = C12 | IOSTANDARD = LVCMOS33;

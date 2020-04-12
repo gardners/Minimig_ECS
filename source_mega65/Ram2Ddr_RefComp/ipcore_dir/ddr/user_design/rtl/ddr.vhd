@@ -203,9 +203,9 @@ entity ddr is
    -- The following parameters are multiplier and divisor factors for PLLE2.
    -- Based on the selected design frequency these parameters vary.
    --***************************************************************************
-   CLKIN_PERIOD          : integer := 4999;
+   CLKIN_PERIOD          : integer := 9999;
                                      -- Input Clock Period
-   CLKFBOUT_MULT         : integer := 6;
+   CLKFBOUT_MULT         : integer := 12;
                                      -- write PLL VCO multiplier
    DIVCLK_DIVIDE         : integer := 1;
                                      -- write PLL VCO divisor
@@ -406,7 +406,7 @@ entity ddr is
    --***************************************************************************
    -- Referece clock frequency parameters
    --***************************************************************************
-   REFCLK_FREQ           : real    := 200.0;
+   REFCLK_FREQ           : real    := 100.0;
                                      -- IODELAYCTRL reference clock frequency
    DIFF_TERM_REFCLK      : string  := "TRUE";
                                      -- Differential Termination for idelay
@@ -538,7 +538,7 @@ architecture arch_ddr of ddr is
   constant TEMP_MON_EN           : string  := TEMP_MON;
                                    -- Enable or disable the temp monitor module
   constant tTEMPSAMPLE : integer := 10000000; -- sample every 10 us
-  constant XADC_CLK_PERIOD : integer := 5000; -- Use 200 MHz IODELAYCTRL clock
+  constant XADC_CLK_PERIOD : integer := 10000; -- Use 100 MHz IODELAYCTRL clock
       
       
 
