@@ -80,8 +80,8 @@ set_property -dict {PACKAGE_PIN V14 IOSTANDARD LVCMOS33} [get_ports vga_vsync]
 #	UARTs
 #	UART3 is console port
 #
-set_property -dict {PACKAGE_PIN L14 IOSTANDARD LVTTL} [get_ports uart3_rxd]
-set_property -dict {PACKAGE_PIN L13 IOSTANDARD LVTTL} [get_ports uart3_txd]
+set_property -dict {PACKAGE_PIN L13 IOSTANDARD LVTTL} [get_ports uart3_rxd]
+set_property -dict {PACKAGE_PIN L14 IOSTANDARD LVTTL} [get_ports uart3_txd]
 
 # Reset button
 set_property -dict {PACKAGE_PIN M13 IOSTANDARD LVTTL} [get_ports sys_reset]
