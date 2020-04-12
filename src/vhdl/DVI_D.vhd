@@ -66,35 +66,19 @@ begin
    u22 : entity work.TDMS_encoder PORT MAP(clk => clk_pixel, data => green_p, c => c_green, blank => blank, encoded => encoded_green);
    u23 : entity work.TDMS_encoder PORT MAP(clk => clk_pixel, data => blue_p,  c => c_blue,  blank => blank, encoded => encoded_blue);
 
- --  ODDR2_red   : ODDR2 generic map( DDR_ALIGNMENT => "C0", INIT => '0', SRTYPE => "ASYNC") 
- --     port map (Q => red_s,   D0 => shift_red(0),   D1 => shift_red(1),   C0 => clk, C1 => clk_n, CE => '1', R => '0', S => '0');
+   ODDR2_red   : ODDR generic map( DDR_ALIGNMENT => "C0", INIT => '0', SRTYPE => "ASYNC") 
+      port map (Q => red_s,   D0 => shift_red(0),   D1 => shift_red(1),   C0 => clk, C1 => clk_n, CE => '1', R => '0', S => '0');
   
- --  ODDR2_green : ODDR2 generic map( DDR_ALIGNMENT => "C0", INIT => '0', SRTYPE => "ASYNC") 
- --     port map (Q => green_s, D0 => shift_green(0), D1 => shift_green(1), C0 => clk, C1 => clk_n, CE => '1', R => '0', S => '0');
+   ODDR2_green : ODDR generic map( DDR_ALIGNMENT => "C0", INIT => '0', SRTYPE => "ASYNC") 
+      port map (Q => green_s, D0 => shift_green(0), D1 => shift_green(1), C0 => clk, C1 => clk_n, CE => '1', R => '0', S => '0');
 
-  -- ODDR2_blue  : ODDR2 generic map( DDR_ALIGNMENT => "C0", INIT => '0', SRTYPE => "ASYNC") 
- --     port map (Q => blue_s,  D0 => shift_blue(0),  D1 => shift_blue(1),  C0 => clk, C1 => clk_n, CE => '1', R => '0', S => '0');
+   ODDR2_blue  : ODDR generic map( DDR_ALIGNMENT => "C0", INIT => '0', SRTYPE => "ASYNC") 
+      port map (Q => blue_s,  D0 => shift_blue(0),  D1 => shift_blue(1),  C0 => clk, C1 => clk_n, CE => '1', R => '0', S => '0');
 
- --  ODDR2_clock : ODDR2 generic map( DDR_ALIGNMENT => "C0", INIT => '0', SRTYPE => "ASYNC") 
- --     port map (Q => clock_s, D0 => shift_clock(0), D1 => shift_clock(1), C0 => clk, C1 => clk_n, CE => '1', R => '0', S => '0');
+   ODDR2_clock : ODDR generic map( DDR_ALIGNMENT => "C0", INIT => '0', SRTYPE => "ASYNC") 
+      port map (Q => clock_s, D0 => shift_clock(0), D1 => shift_clock(1), C0 => clk, C1 => clk_n, CE => '1', R => '0', S => '0');
 
 
-	u2 : entity work.ddr_out
-    port map (clkop=>clk, clkos=>clk_n, clkout=>dummy10, reset=>'0',
-        data(1 downto 0)=>shift_red(1 downto 0), dout(0 downto 0)=>red_s); 
-		 
-	u3 : entity work.ddr_out 
-    port map (clkop=>clk, clkos=>clk_n, clkout=>dummy11, reset=>'0', 
-        data(1 downto 0)=>shift_green(1 downto 0), dout(0 downto 0)=>green_s);		
-		
-	u4 : entity work.ddr_out
-    port map (clkop=>clk, clkos=>clk_n, clkout=>dummy12, reset=>'0', 
-        data(1 downto 0)=>shift_blue(1 downto 0), dout(0 downto 0)=>blue_s);			
-
-	u5 : entity work.ddr_out
-    port map (clkop=>clk, clkos=>clk_n, clkout=>dummy13, reset=>'0',
-        data(1 downto 0)=>shift_clock(1 downto 0), dout(0 downto 0)=>clock_s);
- 
  
    process(clk_pixel)
    begin

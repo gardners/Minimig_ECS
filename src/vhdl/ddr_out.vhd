@@ -18,7 +18,7 @@ entity ddr_out is
   );
 end ddr_out;
 
-architecture Structure of ddr_out_emard is
+architecture Structure of ddr_out is
 begin
   ODDR_inst: ODDR
   generic map
