@@ -25,6 +25,12 @@ $(GHDL):
 	git submodule update
 	( cd ghdl && ./configure --prefix=./build && make && make install )
 
+$(VHDLSRCDIR)/jbboot.vhd:	$(ASSETS)/amigaboot.bin
+	src/tools/jbboot_bin2vhdl.py $(ASSETS)/amigaboot.bin $(VHDLSRCDIR)/jbboot.vhd
+
+$(VHDLSRCDIR)/osd_bootstrap.vhd:	$(ASSETS)/osdload.bin
+	src/tools/osdbootstrap_bin2vhdl.py $(ASSETS)/osdload.bin $(VHDLSRCDIR)/osd_bootstrap.vhd
+
 #-----------------------------------------------------------------------------
 
 # Generate Vivado .xpr from .tcl
