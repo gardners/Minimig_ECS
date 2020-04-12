@@ -9,8 +9,8 @@
 --------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
---Library UNISIM;
---use UNISIM.vcomponents.all;
+Library UNISIM;
+use UNISIM.vcomponents.all;
 
 entity dvid is
     Port ( clk       : in  STD_LOGIC;
