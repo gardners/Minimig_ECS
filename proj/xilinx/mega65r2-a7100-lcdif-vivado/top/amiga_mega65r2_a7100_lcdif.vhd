@@ -39,8 +39,24 @@ port
    vga_hsync          : out  STD_LOGIC;
    vga_red            : out  std_logic_vector (3 downto 0);
    vga_green          : out  std_logic_vector (3 downto 0);
-   vga_blue           : out  std_logic_vector (3 downto 0)
-  
+   vga_blue           : out  std_logic_vector (3 downto 0);
+   
+   -- DDR2 interface
+   ddr2_addr            : out   std_logic_vector(12 downto 0);
+   ddr2_ba              : out   std_logic_vector(2 downto 0);
+   ddr2_ras_n           : out   std_logic;
+   ddr2_cas_n           : out   std_logic;
+   ddr2_we_n            : out   std_logic;
+   ddr2_ck_p            : out   std_logic_vector(0 downto 0);
+   ddr2_ck_n            : out   std_logic_vector(0 downto 0);
+   ddr2_cke             : out   std_logic_vector(0 downto 0);
+   ddr2_cs_n            : out   std_logic_vector(0 downto 0);
+   ddr2_dm              : out   std_logic_vector(1 downto 0);
+   ddr2_odt             : out   std_logic_vector(0 downto 0);
+   ddr2_dq              : inout std_logic_vector(15 downto 0);
+   ddr2_dqs_p           : inout std_logic_vector(1 downto 0);
+   ddr2_dqs_n           : inout std_logic_vector(1 downto 0)
+   
   -- RS232
 --  uart3_txd          : out std_logic; -- rs232 txd
 --  uart3_rxd          : in std_logic; -- rs232 rxd
@@ -117,7 +133,9 @@ architecture struct of amiga_mega65r2_a7100 is
   signal clk_fb_main, clk_fb_sdram: std_logic; -- feedback internally used in clock generator
   signal clk: std_logic := '0';	
   signal clk7m: std_logic := '0';
-  signal clk28m: std_logic := '0';   
+  signal clk28m: std_logic := '0';
+  
+  signal clk_ddr2: std_logic;
  
   signal aud_l: std_logic;
   signal aud_r: std_logic;  
@@ -222,7 +240,8 @@ begin
   ps2m_clk_in<=PS2_clk2;
   -- PS2_clk2 <= '0' when ps2m_clk_out='0' else 'Z';
   PS2_clk2 <= 'Z';
-  
+    
+  clk_ddr2 <= clk_100mhz;  
   clk_main: mmcme2_base
   generic map
   (
@@ -233,7 +252,7 @@ begin
     clkout1_divide   => 120,        --    7.03125 MHz /120 divide
     clkout2_divide   => 30,         --   28.125   MHz /30 divide
     clkout3_divide   => 6,          --  140.625   MHz /6 divide
-    clkout4_divide   => 3,          --  281.25    MHz /3 divide
+    clkout4_divide   => 4,          --  210.94    MHz /4 divide
     bandwidth        => "LOW"
   )
   port map
@@ -247,31 +266,32 @@ begin
     clkout1  => clk7m,              --    7.03125 MHz
     clkout2  => clk28m,             --   28.125   MHz
     clkout3  => clk_dvi,            --  140.625   MHz
-    clkout4  => open,               --  281.25    MHz
+    clkout4  => open,               --  210.94    MHz
     locked   => pll_locked_main
   );
 
-  clk_sdram: mmcme2_base
-  generic map
-  (
-    clkin1_period    => 8.88888888, --   112.5    MHz (8.88888 ns)
-    clkfbout_mult_f  => 10.0,       --  1125.0    MHz *10 common multiply
-    divclk_divide    => 1,          --  1125.0    MHz /1  common divide
-    clkout0_divide_f => 10.0,       --  112.5     MHz /10 divide
-    clkout0_phase    => 144.0,      --            deg phase shift (multiple of 45/clkout0_divide_f = 4.5)
-    bandwidth        => "LOW"
-  )
-  port map
-  (
-    pwrdwn   => '0',
-    rst      => '0',
-    clkin1   => clk,
-    clkfbin  => clk_fb_sdram,
-    clkfbout => clk_fb_sdram,
-    clkout0  => open,               --  112.5     MHz phase shifted
-    locked   => pll_locked_sdram
-  );
-
+--  clk_sdram: mmcme2_base
+--  generic map
+--  (
+--    clkin1_period    => 8.88888888, --   112.5    MHz (8.88888 ns)
+--    clkfbout_mult_f  => 10.0,       --  1125.0    MHz *10 common multiply
+--    divclk_divide    => 1,          --  1125.0    MHz /1  common divide
+--    clkout0_divide_f => 10.0,       --  112.5     MHz /10 divide
+--    clkout0_phase    => 144.0,      --            deg phase shift (multiple of 45/clkout0_divide_f = 4.5)
+--    bandwidth        => "LOW"
+--  )
+--  port map
+--  (
+--    pwrdwn   => '0',
+--    rst      => '0',
+--    clkin1   => clk,
+--    clkfbin  => clk_fb_sdram,
+--    clkfbout => clk_fb_sdram,
+--    clkout0  => open,               --  112.5     MHz phase shifted
+--    locked   => pll_locked_sdram
+--  );
+  pll_locked_sdram <= '1';
+  
   reset_combo1 <= BTN_RESET_N and pll_locked_main and pll_locked_sdram;
 		
   u10 : entity work.poweronreset
@@ -289,10 +309,13 @@ begin
   myFampiga: entity work.Fampiga
   port map
   (
-    clk=> clk,
-    clk7m=> clk7m,
-    clk28m=> clk28m,
-    reset_n=>reset_n,
+    clk        => clk,
+    clk7m      => clk7m,
+    clk28m     => clk28m,
+    clk_ddr2   => clk_ddr2,
+    
+    reset_n    => reset_n,
+    
     --powerled_out=>power_leds(5 downto 4),
     diskled_out=>diskoff,
     --oddled_out=>odd_leds(5), 
@@ -342,7 +365,23 @@ begin
     sd_cs => mmc_n_cs,
     sd_miso => mmc_miso,
     sd_mosi => mmc_mosi,
-    sd_clk => mmc_clk
+    sd_clk => mmc_clk,
+    
+    -- DDR2 interface
+    ddr2_addr      => ddr2_addr,
+    ddr2_ba        => ddr2_ba,
+    ddr2_ras_n     => ddr2_ras_n,
+    ddr2_cas_n     => ddr2_cas_n,
+    ddr2_we_n      => ddr2_we_n,
+    ddr2_ck_p      => ddr2_ck_p,
+    ddr2_ck_n      => ddr2_ck_n,
+    ddr2_cke       => ddr2_cke,
+    ddr2_cs_n      => ddr2_cs_n,
+    ddr2_dm        => ddr2_dm,
+    ddr2_odt       => ddr2_odt,
+    ddr2_dq        => ddr2_dq,
+    ddr2_dqs_p     => ddr2_dqs_p,
+    ddr2_dqs_n     => ddr2_dqs_n    
   );
 
 --  dr_d(31 downto 16) <= (others => 'Z');

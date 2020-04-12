@@ -30,10 +30,27 @@ use ieee.std_logic_unsigned.all;
 entity sdram_shell is
 port (
    sysclk		: in std_logic;                       -- 100 MHz clock
+   clk_ddr2    : in std_logic;                       -- 200 MHz clock
    c_7m        : in std_logic;                       -- 7 MHz clock
 
-   reset_in	: in std_logic;
+   reset_in	   : in std_logic;                       -- low active
    
+   -- DDR2 interface
+   ddr2_addr            : out   std_logic_vector(12 downto 0);
+   ddr2_ba              : out   std_logic_vector(2 downto 0);
+   ddr2_ras_n           : out   std_logic;
+   ddr2_cas_n           : out   std_logic;
+   ddr2_we_n            : out   std_logic;
+   ddr2_ck_p            : out   std_logic_vector(0 downto 0);
+   ddr2_ck_n            : out   std_logic_vector(0 downto 0);
+   ddr2_cke             : out   std_logic_vector(0 downto 0);
+   ddr2_cs_n            : out   std_logic_vector(0 downto 0);
+   ddr2_dm              : out   std_logic_vector(1 downto 0);
+   ddr2_odt             : out   std_logic_vector(0 downto 0);
+   ddr2_dq              : inout std_logic_vector(15 downto 0);
+   ddr2_dqs_p           : inout std_logic_vector(1 downto 0);
+   ddr2_dqs_n           : inout std_logic_vector(1 downto 0);
+      
    -- debug: 7 segment display needs multiplexed approach due to common anode
    SSEG_AN     : out std_logic_vector (7 downto 0);   -- common anode: selects digit
    SSEG_CA     : out std_logic_vector (7 downto 0);   -- cathode: selects segment within a digit      
@@ -224,19 +241,46 @@ signal cpuAddr_mangled : std_logic_vector(24 downto 1);
 -- bank interleaving to make things more efficient.
 
 
--- NEXYS4DDR AND MEGA65: BRAM OR HYPERRAM
-component sram_bram is
+-- NEXYS4DDR AND MEGA65: DDR2 OR HYPERRAM
+component ram2ddr is
+   port (
+      -- Common
+      clk_200MHz_i         : in    std_logic; -- 200 MHz system clock
+      rst_i                : in    std_logic; -- active high system reset
+      device_temp_i        : in    std_logic_vector(11 downto 0);
+      
+      -- RAM interface
+      ram_a                : in    std_logic_vector(26 downto 0);
+      ram_dq_i             : in    std_logic_vector(15 downto 0);
+      ram_dq_o             : out   std_logic_vector(15 downto 0);
+      ram_cen              : in    std_logic;
+      ram_oen              : in    std_logic;
+      ram_wen              : in    std_logic;
+      ram_ub               : in    std_logic;
+      ram_lb               : in    std_logic;
+      
+      -- DDR2 interface
+      ddr2_addr            : out   std_logic_vector(12 downto 0);
+      ddr2_ba              : out   std_logic_vector(2 downto 0);
+      ddr2_ras_n           : out   std_logic;
+      ddr2_cas_n           : out   std_logic;
+      ddr2_we_n            : out   std_logic;
+      ddr2_ck_p            : out   std_logic_vector(0 downto 0);
+      ddr2_ck_n            : out   std_logic_vector(0 downto 0);
+      ddr2_cke             : out   std_logic_vector(0 downto 0);
+      ddr2_cs_n            : out   std_logic_vector(0 downto 0);
+      ddr2_dm              : out   std_logic_vector(1 downto 0);
+      ddr2_odt             : out   std_logic_vector(0 downto 0);
+      ddr2_dq              : inout std_logic_vector(15 downto 0);
+      ddr2_dqs_p           : inout std_logic_vector(1 downto 0);
+      ddr2_dqs_n           : inout std_logic_vector(1 downto 0)
+   );
+end component;
+
+component debug_7digits is
 port(
-   clk            : in std_logic;  
-   
-   sram_in  		: in std_logic_vector(15 downto 0);  -- sram data bus in    
-   sram_out		   : out std_logic_vector(15 downto 0); -- sram data bus out
-   
+   clk            : in std_logic;     
    ram_address		: in std_logic_vector(21 downto 1); -- sram address bus 
-   n_ram_bhe		: in std_logic;                     -- sram upper byte select
-   n_ram_ble		: in std_logic;                     -- sram lower byte select
-   n_ram_we		   : in std_logic;                     -- sram write enable
-   n_ram_oe		   : in std_logic;                     -- sram output enable
    
    -- 7 segment display needs multiplexed approach due to common anode
    SSEG_AN        : out std_logic_vector (7 downto 0);   -- common anode: selects digit
@@ -249,25 +293,52 @@ signal mm_sram_out : std_logic_vector(15 downto 0);
 
 begin
 
--- NEXYS4DDR AND MEGA65: BRAM OR HYPERRAM
-   mysram : sram_bram
-      port map
-      (
-         clk         => sysclk,
+-- NEXYS4DDR AND MEGA65: DDR2 OR HYPERRAM
 
-         ram_address => chipAddr(21 downto 1),         
-         sram_in     => mm_sram_in,
-         sram_out    => mm_sram_out,
-         
-         n_ram_bhe   => chipU,
-         n_ram_ble   => chipL,
-         n_ram_we    => chipRW,
-         n_ram_oe    => chip_dma,
-                  
-         -- debug out
-         SSEG_AN     => SSEG_AN,
-         SSEG_CA     => SSEG_CA
-      );
+   myddr2 : ram2ddr
+   port map (
+      -- Common
+      clk_200MHz_i   => clk_ddr2,
+      rst_i          => not reset_in,
+      device_temp_i  => (others => '0'),
+      
+      -- RAM interface
+      ram_a          => "0000" & chipAddr(23 downto 1),
+      ram_dq_i       => mm_sram_in,
+      ram_dq_o       => mm_sram_out,
+      ram_cen        => chip_dma and chipRW,
+      ram_oen        => chip_dma, 
+      ram_wen        => chipRW,
+      ram_ub         => chipU,
+      ram_lb         => chipL,
+      
+      -- DDR2 interface
+      ddr2_addr      => ddr2_addr,
+      ddr2_ba        => ddr2_ba,
+      ddr2_ras_n     => ddr2_ras_n,
+      ddr2_cas_n     => ddr2_cas_n,
+      ddr2_we_n      => ddr2_we_n,
+      ddr2_ck_p      => ddr2_ck_p,
+      ddr2_ck_n      => ddr2_ck_n,
+      ddr2_cke       => ddr2_cke,
+      ddr2_cs_n      => ddr2_cs_n,
+      ddr2_dm        => ddr2_dm,
+      ddr2_odt       => ddr2_odt,
+      ddr2_dq        => ddr2_dq,
+      ddr2_dqs_p     => ddr2_dqs_p,
+      ddr2_dqs_n     => ddr2_dqs_n
+   );
+
+   mydebug : debug_7digits
+   port map
+   (
+      clk         => sysclk,
+      ram_address => chipAddr(21 downto 1),         
+               
+      -- debug out
+      SSEG_AN     => SSEG_AN,
+      SSEG_CA     => SSEG_CA
+   );
 
 -- Turns out this is counter-productive
 --cpuAddr_mangled<=cpuAddr(24)&cpuAddr(3)&cpuAddr(22 downto 4)&cpuAddr(23)&cpuAddr(2 downto 1)
