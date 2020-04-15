@@ -4,57 +4,34 @@ use ieee.std_logic_unsigned.all;
 use IEEE.numeric_std.ALL;
 
 entity container is
-port(
-		clk 	: in std_logic;
-		clk7m : in std_logic;
-		clk28m : in std_logic;
-		reset_n : in std_logic;
-		powerled_out : out unsigned (1 downto 0);
-		diskled_out : out std_logic;	-- Use for SD access
-		oddled_out : out std_logic; -- Use for floppy access
+  port(
+    CLK_IN : in std_logic;
 
-		-- SDRAM.  A separate shifted clock is provided by the toplevel
-		sdr_addr : out std_logic_vector(11 downto 0);
-		sdr_data : inout std_logic_vector(15 downto 0);
-		sdr_ba : out std_logic_vector(1 downto 0);
-		sdr_cke : out std_logic;
-		sdr_dqm : out std_logic_vector(1 downto 0);
-		sdr_cs : out std_logic;
-		sdr_we : out std_logic;
-		sdr_cas : out std_logic;
-		sdr_ras : out std_logic;
-	
+    btnCpuReset : in std_logic;
+    
 		-- VGA
-		vga_r		: out std_logic_vector(7 downto 0);
-		vga_g 	: out std_logic_vector(7 downto 0);
-		vga_b 	: out std_logic_vector(7 downto 0);
-
-		vga_hsync 	: buffer std_logic;
-		vga_vsync 	: buffer std_logic;
-
-		-- PS/2
-		ps2k_clk_in : inout std_logic;
-		ps2k_clk_out : inout std_logic;
-		ps2k_dat_in : inout std_logic;
-		ps2k_dat_out : inout std_logic;
-		ps2m_clk_in : inout std_logic;
-		ps2m_clk_out : inout std_logic;
-		ps2m_dat_in : inout std_logic;
-		ps2m_dat_out : inout std_logic;
-		
+		vgared		: out std_logic_vector(7 downto 0);
+		vgagreen 	: out std_logic_vector(7 downto 0);
+		vgablue 	: out std_logic_vector(7 downto 0);
+		hsync 	: buffer std_logic;
+		vsync 	: buffer std_logic;
+                vdac_clk : out std_logic;
+                vdac_sync_n : out std_logic;
+                vdac_blank_n : out std_logic;
+                
 		-- Audio
-		aud_l : out std_logic;
-		aud_r : out std_logic;
+		pwm_l : out std_logic;
+		pwm_r : out std_logic;
 		
 		-- RS232
-		rs232_rxd : in std_logic;
-		rs232_txd : out std_logic;
+		RsRx : in std_logic;
+		UART_TXD : out std_logic;
 
 		-- SD card interface
-		sd_cs : out std_logic;
-		sd_miso : in std_logic;
-		sd_mosi : out std_logic;
-		sd_clk : out std_logic
+		sdReset : out std_logic;
+		sdMISO : in std_logic;
+		sdMOSI : out std_logic;
+		sdClock : out std_logic
 
 		-- FIXME - add joystick ports
 	);
@@ -63,6 +40,13 @@ end entity;
 
 architecture RTL of container is
 
+  signal clk7m : std_logic;
+  signal clk28m : std_logic;
+  signal powerled_out :  unsigned (1 downto 0);
+  signal diskled_out : std_logic;	-- Use for SD access
+  signal oddled_out : std_logic; -- Use for floppy access
+
+  
 		-- CPU
 signal cpu_address : std_logic_vector(31 downto 0);
 signal cpu_data_in : std_logic_vector(15 downto 0);
@@ -90,7 +74,6 @@ signal mm_ram_oe : std_logic;
 
 signal cpu_config : std_logic_vector(1 downto 0);
 signal mem_config : std_logic_vector(5 downto 0);
-signal sdram_ready : std_logic;
 signal cpu_ena : std_logic;
 
 		-- TG68 signals
@@ -200,17 +183,20 @@ signal sdled : std_logic;
 signal floppyled : std_logic;
 
 begin
-	sdr_cke<='1';
 	powerled_out<=powerled & '1';
 --	oddled_out<=floppyled;
 	diskled_out<=spi_chipselect(1);
 
-	sd_clk <= spi_sck;
-	sd_cs <= spi_chipselect(1);
-	sd_mosi <= spi_sdi;
+	sdClock <= spi_sck;
+	sdReset <= spi_chipselect(1);
+	sdMOSI <= spi_sdi;
 
+        vdac_blank_n <= '1';
+        vdac_sync_n <= '1';
+        vdac_clk <= clk28m;
+        
 	
-MyMinimig: COMPONENT Minimig1
+MyMinimig: component Minimig1
 	generic map
 	(
 		NTSC => 0
@@ -241,53 +227,53 @@ MyMinimig: COMPONENT Minimig1
 		
 		-- Clocks
 		
-		clk => clk7m, -- 113Mhz
+		clk => clk7m,
 		clk28m => clk28m, -- 28Mhz
 		
-		-- Peripherals
-		
---		rxd => rs232_rxd,
---		txd => rs232_txd,
-		rxd => '1',
+		-- Peripherals                
+                
+--		txd => UART_TXD,
+--		rxd => RsRx,
 		txd => open,
+		rxd => '1',
 		cts => '0',
 		rts => open,
 		n_joy1	=> "111111",
 		n_joy2 => "111111",
 		n_15khz => '1',
 		pwrled => powerled,
-		kbddat => ps2k_dat_in,
-		kbdclk => ps2k_clk_in,
-		msdat => ps2m_dat_in,
-		msclk => ps2m_clk_in,
-		msdato => ps2m_dat_out,
-		msclko => ps2m_clk_out,
-		kbddato => ps2k_dat_out,
-		kbdclko => ps2k_clk_out,
+		kbddat => '1',
+		kbdclk => '1',
+		msdat => '1',
+		msclk => '1',
+--		msdato => ps2m_dat_out,
+--		msclko => ps2m_clk_out,
+--		kbddato => ps2k_dat_out,
+--		kbdclko => ps2k_clk_out,
 		n_scs => spi_chipselect(6 downto 4),
-		direct_sdi => sd_miso,
+		direct_sdi => sdMISO,
 		sdi => spi_sdi,
 		sdo => spi_sdo,
 		sck => spi_sck,
 		
 		-- Video
 		
-		n_hsync => vga_hsync,
-		n_vsync => vga_vsync,
-		red => vga_r(7 downto 4),
-		green => vga_g(7 downto 4),
-		blue => vga_b(7 downto 4),
+		n_hsync => hsync,
+		n_vsync => vsync,
+		red => vgared(7 downto 4),
+		green => vgagreen(7 downto 4),
+		blue => vgablueb(7 downto 4),
 		
-		aud_l => aud_l,
-		aud_r => aud_r,
+		aud_l => pwm_l,
+		aud_r => pwm_r,
 		cpu_config => cpu_config,
 		memcfg => mem_config,
 		drv_snd => open,
 		floppyled => oddled_out,
 		init_b => open,
 		ramdata_in => mm_ram_data_in,
-		cpurst => not (maincpuready and n_cpu_reset and sdram_ready),
-		locked => sdram_ready,
+		cpurst => not (maincpuready and btnCpuReset),
+		locked => btnCpuReset,
 		sysclock => clk,
 		ascancode => "100000000",
 		n_joy3 => "111111",
@@ -297,8 +283,8 @@ MyMinimig: COMPONENT Minimig1
 MainCPU: entity work.TG68K
    port map
 	(        
-		clk => clk,
-		reset => n_cpu_reset and sdram_ready,
+		clk => clk7m,
+		reset => n_cpu_reset and btnCpuReset,
 		clkena_in => '1',
 		  
 	  -- Standard MC68000 signals...
@@ -340,60 +326,11 @@ MainCPU: entity work.TG68K
       ramuds => cpu_ram_uds
 	);
 
-mysdram : entity work.sdram
-	port map
-	(
-		sdata => sdr_data,
-		sdaddr(11 downto 0) => sdr_addr,
-		dqm => sdr_dqm,
-		sd_cs(0)	=> sdr_cs,
-		sd_cs(3 downto 1) => open,
-		ba => sdr_ba,
-		sd_we => sdr_we,
-		sd_ras => sdr_ras,
-		sd_cas => sdr_cas,
-
-		sysclk => clk,
-		reset_in	=> reset_n,
-	
-		hostWR => hostWR,
-		hostAddr	=> hostAddr,
-		hostState => hostState,
-		hostL => hostL,
-		hostU => hostU,
-		hostRD => hostRD,
-		hostena => hostena_in,
-
-		cpuWR	=> cpu_data_out,
-		cpuAddr => cpu_ramaddr(24 downto 1),
-		cpuU => cpu_ram_uds,
-		cpuL => cpu_ram_lds,
-		cpustate	=> cpustate,
-		cpu_dma => cpu_dma,
-		cpuRD	=> cpu_data_from_ram,
-		cpuena => cpu_ena,
-		
-		chipWR => mm_ram_data_out,
-		chipAddr => "00"&mm_ram_address,
-		chipU => mm_ram_bhe,
-		chipL	=> mm_ram_ble,
-		chipRW => mm_ram_we,
-		chip_dma	=> mm_ram_oe,
-		chipRD => mm_ram_data_in,
-
-		c_7m => clk7m,
-
-		reset_out => sdram_ready,
-		enaRDreg => open,
-		enaWRreg	=> enaWRreg,
-		ena7RDreg => ena7RDreg,
-		ena7WRreg => ena7WRreg
-	);
-	
 mycfide : entity work.cfide 
-   port map ( 
-		sysclk => clk,
-		n_reset => sdram_ready,
+  port map (
+    -- XXX PGS I *think* this should be 28MHz, but it isn't clear
+		sysclk => clk28m,
+		n_reset => btnCpuReset,
 		cpuena_in => hostena_in,
 		memdata_in => hostRD,
 		addr => hostaddr,
@@ -409,15 +346,18 @@ mycfide : entity work.cfide
 		sd_cs => spi_chipselect,
 		sd_clk => spi_sck,
 		sd_do => spi_sdi,
-		sd_dimm => sd_miso,
+		sd_dimm => sdMiso,
 		enaWRreg => enaWRreg,
-		debugTxD => rs232_txd,
-		debugRxD => rs232_rxd
+		debugTxD => UART_TXD,
+		debugRxD => RsRx
    );
 
 myhostcpu : entity work.TG68KdotC_Kernel
-   port map(clk => clk,
-		nReset => sdram_ready,
+  port map(
+-- XXX PGS Likewise, I don't know what speed this clock is actually supposed to
+-- be
+    clk => clk7m,
+		nReset => btnCpuReset,
 		clkena_in => hostena and enaWRreg,
 		data_in => hostdata,
 		addr(23 downto 0) => hostaddr,
