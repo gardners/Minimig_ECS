@@ -3,6 +3,9 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use IEEE.numeric_std.ALL;
 
+library unisim;
+use unisim.vcomponents.all;
+
 entity container is
   port(
     CLK_IN : in std_logic;
@@ -13,8 +16,8 @@ entity container is
 		vgared		: out std_logic_vector(7 downto 0);
 		vgagreen 	: out std_logic_vector(7 downto 0);
 		vgablue 	: out std_logic_vector(7 downto 0);
-		hsync 	: buffer std_logic;
-		vsync 	: buffer std_logic;
+		hsync 	: out std_logic;
+		vsync 	: out std_logic;
                 vdac_clk : out std_logic;
                 vdac_sync_n : out std_logic;
                 vdac_blank_n : out std_logic;
@@ -40,8 +43,12 @@ end entity;
 
 architecture RTL of container is
 
+  signal clk : std_logic; 
   signal clk7m : std_logic;
   signal clk28m : std_logic;
+  signal clk140 : std_logic;
+  signal clk281 : std_logic;
+  signal pll_locked : std_logic;
   signal powerled_out :  unsigned (1 downto 0);
   signal diskled_out : std_logic;	-- Use for SD access
   signal oddled_out : std_logic; -- Use for floppy access
@@ -182,6 +189,8 @@ signal powerled : std_logic;
 signal sdled : std_logic;
 signal floppyled : std_logic;
 
+signal clk_fb : std_logic;
+
 begin
 	powerled_out<=powerled & '1';
 --	oddled_out<=floppyled;
@@ -195,7 +204,36 @@ begin
         vdac_sync_n <= '1';
         vdac_clk <= clk28m;
         
-	
+
+ clk_main: mmcme2_base
+  generic map
+  (
+    clkin1_period    => 10.0,           --   100      MHz
+    clkfbout_mult_f  => 16.875,         --  1687.5    MHz *16.875 common multiply
+    divclk_divide    => 2,              --   843.75   MHz /2 common divide
+    clkout0_divide_f => 7.5,            --  112.5     MHz /7.5 divide
+    clkout1_divide   => 120,            --    7.03125 MHz /120 divide
+    clkout2_divide   => 30,             --   28.125   MHz /30 divide
+    clkout3_divide   => 6,              --  140.625   MHz /6 divide
+    clkout4_divide   => 3,              --  281.25    MHz /3 divide
+    bandwidth        => "OPTIMIZED"
+  )
+  port map
+  (
+    pwrdwn   => '0',
+    rst      => '0',
+    clkin1   => CLK_IN,
+    clkfbin  => clk_fb,
+    clkfbout => clk_fb,
+    clkout0  => clk,                  --  112.5     MHz
+    clkout1  => clk7m,                --    7.03125 MHz
+    clkout2  => clk28m,               --   28.125   MHz
+    clkout3  => clk140,              --  140.625   MHz
+    clkout4  => clk281,                 --  281.25    MHz
+    locked   => pll_locked
+  );
+
+        
 MyMinimig: component Minimig1
 	generic map
 	(
@@ -262,7 +300,7 @@ MyMinimig: component Minimig1
 		n_vsync => vsync,
 		red => vgared(7 downto 4),
 		green => vgagreen(7 downto 4),
-		blue => vgablueb(7 downto 4),
+		blue => vgablue(7 downto 4),
 		
 		aud_l => pwm_l,
 		aud_r => pwm_r,
@@ -329,7 +367,7 @@ MainCPU: entity work.TG68K
 mycfide : entity work.cfide 
   port map (
     -- XXX PGS I *think* this should be 28MHz, but it isn't clear
-		sysclk => clk28m,
+		sysclk => clk,
 		n_reset => btnCpuReset,
 		cpuena_in => hostena_in,
 		memdata_in => hostRD,
@@ -356,7 +394,7 @@ myhostcpu : entity work.TG68KdotC_Kernel
   port map(
 -- XXX PGS Likewise, I don't know what speed this clock is actually supposed to
 -- be
-    clk => clk7m,
+    clk => clk,
 		nReset => btnCpuReset,
 		clkena_in => hostena and enaWRreg,
 		data_in => hostdata,
