@@ -907,9 +907,9 @@ gayle GAYLE1
 //);
 JBBoot BOOTROM1 
 (	
-	.clock(sysclock),
-	.address(cpu_address[10:1]),
-	.q(boot_data)
+	.clk(sysclock),
+	.addr(cpu_address[10:1]),
+	.data(boot_data)
 );
 
 //assign boot_data_out[15:0] = (sel_boot && cpu_rd) ? boot_data[15:0] : 16'h0000;

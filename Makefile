@@ -35,7 +35,7 @@ $(VHDLSRCDIR)/osd_bootstrap.vhd:	$(ASSETS)/osdload.bin
 #-----------------------------------------------------------------------------
 
 # Generate Vivado .xpr from .tcl
-vivado/%.xpr: 	vivado/%_gen.tcl | $(VHDLSRCDIR)/*.vhdl $(VHDLSRCDIR)/*.xdc 
+vivado/%.xpr: 	vivado/%_gen.tcl | $(VHDLSRCDIR)/*.vhdl $(VHDLSRCDIR)/*.xdc
 	echo MOOSE $@ from $<
 	$(VIVADO) -mode batch -source $<
 
@@ -63,7 +63,7 @@ $(BINDIR)/%.mcs:	$(BINDIR)/%.bit
 	mkdir -p $(SDCARD_DIR)
 	$(VIVADO) -mode batch -source vivado/run_mcs.tcl -tclargs $< $@
 
-vivado/mega65r2_gen.tcl:	$(TOOLDIR)/gen_gen.sh
+vivado/mega65r2_gen.tcl:	$(TOOLDIR)/gen_gen.sh $(VHDLSRCDIR)/osd_bootstrap.vhd $(VHDLSRCDIR)/jbboot.vhd
 	$(TOOLDIR)/gen_gen.sh mega65r2 > vivado/mega65r2_gen.tcl
 
 clean:
