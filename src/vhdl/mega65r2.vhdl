@@ -34,12 +34,12 @@ entity container is
 		sdReset : out std_logic;
 		sdMISO : in std_logic;
 		sdMOSI : out std_logic;
-		sdClock : out std_logic
+		sdClock : out std_logic;
 
                 -- MEGA65 physical keyboard interface
                 kb_io0 : out std_logic;
                 kb_io1 : out std_logic;
-                kb_io2 : in std_logic;                
+                kb_io2 : in std_logic              
                 
 		-- FIXME - add joystick ports
 	);
@@ -425,7 +425,9 @@ myhostcpu : entity work.TG68KdotC_Kernel
 
   kbd0: entity work.mega65kbd_to_matrix
     port map (
-      ioclock => cpuclock,
+      -- MEGA65 used 40MHz, but 28MHz is the closest we have here.
+      -- Should be amply fast enough.
+      ioclock => clk28m,
 
       powerled => powerled,
       flopled => '0',
