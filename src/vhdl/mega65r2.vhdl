@@ -36,6 +36,11 @@ entity container is
 		sdMOSI : out std_logic;
 		sdClock : out std_logic
 
+                -- MEGA65 physical keyboard interface
+                kb_io0 : out std_logic;
+                kb_io1 : out std_logic;
+                kb_io2 : in std_logic;                
+                
 		-- FIXME - add joystick ports
 	);
 end entity;
@@ -49,7 +54,6 @@ architecture RTL of container is
   signal clk140 : std_logic;
   signal clk281 : std_logic;
   signal pll_locked : std_logic;
-  signal powerled_out :  unsigned (1 downto 0);
   signal diskled_out : std_logic;	-- Use for SD access
   signal oddled_out : std_logic; -- Use for floppy access
 
@@ -191,8 +195,15 @@ signal floppyled : std_logic;
 
 signal clk_fb : std_logic;
 
+signal m65_matrix_col_idx : integer range 0 to 8 := 0;
+signal m65_matrix_col : std_logic_vector(7 downto 0);
+signal keyrestore : std_logic := '1';
+signal keycapslock : std_logic := '0';
+signal keyfast : std_logic := '0';
+signal keyup : std_logic := '0';
+signal keyleft : std_logic := '0';
+
 begin
-	powerled_out<=powerled & '1';
 --	oddled_out<=floppyled;
 	diskled_out<=spi_chipselect(1);
 
@@ -411,5 +422,28 @@ myhostcpu : entity work.TG68KdotC_Kernel
 		skipFetch => open,
 		regin => open
 	);
-	
+
+  kbd0: entity work.mega65kbd_to_matrix
+    port map (
+      ioclock => cpuclock,
+
+      powerled => powerled,
+      flopled => '0',
+      flopmotor => diskled_out,
+            
+      kio8 => kb_io0,
+      kio9 => kb_io1,
+      kio10 => kb_io2,
+
+      matrix_col => m65_matrix_col,
+      matrix_col_idx => m65_matrix_col_idx,
+      restore => keyrestore,
+      fastkey_out => keyfast,
+      capslock_out => keycapslock,
+      upkey => keyup,
+      leftkey => keyleft
+      
+      );
+
+        
 end rtl;
