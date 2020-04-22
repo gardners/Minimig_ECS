@@ -39,7 +39,7 @@ vivado/%.xpr: 	vivado/%_gen.tcl # | $(VHDLSRCDIR)/*.vhdl $(VHDLSRCDIR)/*.xdc
 	echo MOOSE $@ from $<
 	$(VIVADO) -mode batch -source $<
 
-$(BINDIR)/%.bit: 	vivado/%.xpr $(VHDLSRCDIR)/*.vhdl $(VHDLSRCDIR)/*.xdc $(VERILOGSRCDIR)/*.v 
+$(BINDIR)/%.bit: 	vivado/%.xpr # $(VHDLSRCDIR)/*.vhdl $(VHDLSRCDIR)/*.xdc $(VERILOGSRCDIR)/*.v 
 	echo MOOSE $@ from $<
 #	@rm -f $@
 #	@echo "---------------------------------------------------------"
