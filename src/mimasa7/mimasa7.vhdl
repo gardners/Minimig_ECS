@@ -21,6 +21,7 @@ architecture RTL of container is
   signal clk28m : std_logic;
   signal clk140 : std_logic;
   signal clk281 : std_logic;
+  signal clk_fb : std_logic;
   signal pll_locked : std_logic;
   signal diskled_out : std_logic;	-- Use for SD access
   signal oddled_out : std_logic; -- Use for floppy access
@@ -45,7 +46,7 @@ begin
   (
     pwrdwn   => '0',
     rst      => '0',
-    clkin1   => CLK_IN,
+    clkin1   => CLK1,
     clkfbin  => clk_fb,
     clkfbout => clk_fb,
     clkout0  => clk,                  --  112.5     MHz
@@ -61,7 +62,7 @@ begin
   begin
 	  if rising_edge(clk7m) then
 		  counter <= counter + 1;
-		  led <= std_logic_vector(counter(23 downto 16);
+		  led <= std_logic_vector(counter(23 downto 16));
 	  end if;
   end process;
         
