@@ -35,7 +35,7 @@ $(VHDLSRCDIR)/osd_bootstrap.vhd:	$(ASSETS)/osdload.bin
 #-----------------------------------------------------------------------------
 
 # Generate Vivado .xpr from .tcl
-vivado/%.xpr: 	vivado/%_gen.tcl | $(VHDLSRCDIR)/*.vhdl $(VHDLSRCDIR)/*.xdc
+vivado/%.xpr: 	vivado/%_gen.tcl # | $(VHDLSRCDIR)/*.vhdl $(VHDLSRCDIR)/*.xdc
 	echo MOOSE $@ from $<
 	$(VIVADO) -mode batch -source $<
 
