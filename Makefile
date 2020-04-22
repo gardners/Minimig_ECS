@@ -66,6 +66,9 @@ $(BINDIR)/%.mcs:	$(BINDIR)/%.bit
 vivado/mega65r2_gen.tcl:	$(TOOLDIR)/gen_gen.sh $(VHDLSRCDIR)/osd_bootstrap.vhd $(VHDLSRCDIR)/jbboot.vhd
 	$(TOOLDIR)/gen_gen.sh mega65r2 > vivado/mega65r2_gen.tcl
 
+vivado/mimasa7_gen.tcl:	$(TOOLDIR)/gen_gen.sh $(VHDLSRCDIR)/osd_bootstrap.vhd $(VHDLSRCDIR)/jbboot.vhd
+	$(TOOLDIR)/gen_gen.sh mimasa7 > vivado/mimasa7_gen.tcl
+
 clean:
 	rm -rf vivado/mega65r2.cache
 	rm -rf vivado/mega65r2.runs
