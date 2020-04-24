@@ -1,6 +1,14 @@
 set_property CFGBVS VCCO [current_design]
 set_property CONFIG_VOLTAGE 3.3 [current_design]
 
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
+set_property BITSTREAM.CONFIG.CONFIGRATE 66 [current_design]
+set_property CONFIG_VOLTAGE 3.3 [current_design]
+set_property CFGBVS VCCO [current_design]
+set_property CONFIG_MODE SPIx4 [current_design]
+set_property BITSTREAM.CONFIG.SPI_32BIT_ADDR YES [current_design]
+set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
+
 ####################################################################################################################
 #                                               CLOCK 100MHz                                                       #
 ####################################################################################################################
@@ -251,8 +259,8 @@ set_property -dict  { PACKAGE_PIN "N13"   IOSTANDARD LVCMOS33   SLEW FAST } [get
 ###################################################################################################################
 set_property -dict  { PACKAGE_PIN "J20"   IOSTANDARD LVCMOS33   SLEW FAST } [get_ports {P12[0]}];                       # IO_L11P_T1_SRCC_15            Sch = GPIO_1_P
 set_property -dict  { PACKAGE_PIN "J21"   IOSTANDARD LVCMOS33   SLEW FAST } [get_ports {P12[1]}];                       # IO_L11N_T1_SRCC_15            Sch = GPIO_1_N
-set_property -dict  { PACKAGE_PIN "K21"   IOSTANDARD LVCMOS33   SLEW FAST } [get_ports {P12[2]}];                       # IO_L9P_T1_DQS_AD3P_15         Sch = GPIO_2_P
-set_property -dict  { PACKAGE_PIN "K22"   IOSTANDARD LVCMOS33   SLEW FAST } [get_ports {P12[3]}];                       # IO_L9N_T1_DQS_AD3N_15         Sch = GPIO_2_N
+set_property -dict  { PACKAGE_PIN "K21"   IOSTANDARD LVCMOS33   SLEW SLOW } [get_ports {P12[2]}];                       # IO_L9P_T1_DQS_AD3P_15         Sch = GPIO_2_P
+set_property -dict  { PACKAGE_PIN "K22"   IOSTANDARD LVCMOS33   SLEW SLOW } [get_ports {P12[3]}];                       # IO_L9N_T1_DQS_AD3N_15         Sch = GPIO_2_N
 set_property -dict  { PACKAGE_PIN "H20"   IOSTANDARD LVCMOS33   SLEW FAST } [get_ports {P12[4]}];                       # IO_L8P_T1_AD10P_15            Sch = GPIO_3_P
 set_property -dict  { PACKAGE_PIN "G20"   IOSTANDARD LVCMOS33   SLEW FAST } [get_ports {P12[5]}];                       # IO_L8N_T1_AD10N_15            Sch = GPIO_3_N
 set_property -dict  { PACKAGE_PIN "J19"   IOSTANDARD LVCMOS33   SLEW FAST } [get_ports {P12[6]}];                       # IO_L12P_T1_MRCC_15            Sch = GPIO_4_P
