@@ -64,6 +64,7 @@ begin
                data_n => hdmi_tx_n,
                clk_p => hdmi_tx_clk_p,
                clk_n => hdmi_tx_clk_n,
+               led => led,
                reset => reset
        );
          

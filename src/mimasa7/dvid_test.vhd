@@ -12,7 +12,8 @@ Library UNISIM;
 use UNISIM.vcomponents.all;
 
 entity dvid_test is
-    Port ( clk_in  : in  STD_LOGIC;
+  Port ( clk_in  : in  STD_LOGIC;
+         led : out std_logic_vector(7 downto 0);
            data_p    : out  STD_LOGIC_VECTOR(2 downto 0);
            data_n    : out  STD_LOGIC_VECTOR(2 downto 0);
            clk_p          : out    std_logic;
@@ -167,39 +168,44 @@ Inst_vga: vga GENERIC MAP (
 process (clk_in) is
 begin
 
-  if rising_edge(clk_vga) then
+  if rising_edge(clk_in) then
 
-    if audio_address < 9 then
-      audio_data <= std_logic_vector(sine_table(audio_address) + 128);
-    elsif audio_address < 18 then
-      audio_data <= std_logic_vector(sine_table(8 - (audio_address - 9)) + 128);
-    elsif audio_address < 27 then
-      audio_data <= std_logic_vector(128 - sine_table(audio_address - 18));
-    elsif audio_address < 36 then
-      audio_data <= std_logic_vector(128 - sine_table(8 - (audio_address - 27)));
-    else
-      audio_data <= x"80";
-    end if;
+--    if audio_address < 9 then
+--      audio_data <= std_logic_vector(sine_table(audio_address) + 128);
+--    elsif audio_address < 18 then
+--      audio_data <= std_logic_vector(sine_table(8 - (audio_address - 9)) + 128);
+--    elsif audio_address < 27 then
+--      audio_data <= std_logic_vector(128 - sine_table(audio_address - 18));
+--    elsif audio_address < 36 then
+--      audio_data <= std_logic_vector(128 - sine_table(8 - (audio_address - 27)));
+--    else
+--      audio_data <= x"80";
+--    end if;
+
+    led <= audio_data;
     
     -- Strobe sample_ready at 48KHz
     if audio_counter /= 2083 then
       audio_counter <= audio_counter + 1;
       sample_ready <= false;
     else
+      audio_counter <= 0;
+      sample_ready <= true;
       audio_l(15 downto 8) <= audio_data;
       audio_r(15 downto 8) <= audio_data;
       -- 48KHz sample rate, so 200Hz requires dividing by ~240
       if sample_repeat /= 240 then
         sample_repeat <= sample_repeat + 1;
       else
+        audio_data(7) <= not audio_data(7);
+        
         sample_repeat <= 0;
         if audio_address /= 35 then
-          audio_address <= audio_address + 1;
+          audio_address <= audio_address + 1;          
         else
           audio_address <= 0;
         end if;
       end if;
-      sample_ready <= true;
     end if;
     
   end if;
