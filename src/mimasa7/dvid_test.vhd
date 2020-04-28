@@ -128,8 +128,8 @@ OBUFDS_clock : OBUFDS port map ( O  => CLK_P, OB => CLK_N, I  => clock_s );
     -- generic map ( IOSTANDARD => "DEFAULT")    
    
 Inst_vga: vga GENERIC MAP (
-      hRez       => 640, hStartSync => 656, hEndSync   => 752, hMaxCount  => 800, hsyncActive => '0',
-      vRez       => 480, vStartSync => 490, vEndSync   => 492, vMaxCount  => 525, vsyncActive => '1'
+      hRez       => 720, hStartSync => 732, hEndSync   => 796, hMaxCount  => 861, hsyncActive => '0',
+      vRez       => 576, vStartSync => 587, vEndSync   => 592, vMaxCount  => 623, vsyncActive => '1'
    ) PORT MAP(
       pixelClock => clk_vga,
       Red        => red,
