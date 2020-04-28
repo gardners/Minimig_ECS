@@ -7,6 +7,7 @@
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
 Library UNISIM;
 use UNISIM.vcomponents.all;
 
@@ -77,6 +78,28 @@ architecture Behavioral of dvid_test is
 
    signal audio_l : std_logic_vector(15 downto 0) := x"0000";
    signal audio_r : std_logic_vector(15 downto 0) := x"0000";
+
+   signal counter : integer := 0;
+
+   signal audio_counter : integer := 0;
+   signal sample_repeat : integer := 0;
+   signal audio_address : integer := 0;
+   signal audio_data : std_logic_vector(7 downto 0) := x"00";
+
+   signal sample_ready : boolean := false;
+
+   type sine_t is array (0 to 8) of unsigned(7 downto 0);
+   signal sine_table : sine_t := (
+     0 => to_unsigned(0,8),
+     1 => to_unsigned(22,8),
+     2 => to_unsigned(43,8),
+     3 => to_unsigned(64,8),
+     4 => to_unsigned(82,8),
+     5 => to_unsigned(98,8),
+     6 => to_unsigned(110,8),
+     7 => to_unsigned(120,8),
+     8 => to_unsigned(126,8)
+     );
    
 begin
    
@@ -103,17 +126,17 @@ Inst_dvid: entity work.dvid PORT MAP(
       hsync     => hsync,
       vsync     => vsync,
 
-      EnhancedMode => false,
+      EnhancedMode => true,
       IsProgressive => true,
       IsPAL => true,
-      Is30kHz => false,
-      Limited_Range => false,
+      Is30kHz => true,
+      Limited_Range => true,
       Widescreen => false,
 
       HDMI_audio_L => audio_L,
       HDMI_audio_R => audio_R,
-      HDMI_LeftEnable => false,
-      HDMI_RightEnable => false,      
+      HDMI_LeftEnable => true,
+      HDMI_RightEnable => sample_ready,
       
       -- outputs to TMDS drivers
       red_s     => red_s,
@@ -139,5 +162,48 @@ Inst_vga: vga GENERIC MAP (
       hSync      => hSync,
       vSync      => vSync,
       blank      => blank
-   );
+      );
+
+process (clk_in) is
+begin
+
+  if rising_edge(clk_vga) then
+
+    if audio_address < 9 then
+      audio_data <= std_logic_vector(sine_table(audio_address) + 128);
+    elsif audio_address < 18 then
+      audio_data <= std_logic_vector(sine_table(8 - (audio_address - 9)) + 128);
+    elsif audio_address < 27 then
+      audio_data <= std_logic_vector(128 - sine_table(audio_address - 18));
+    elsif audio_address < 36 then
+      audio_data <= std_logic_vector(128 - sine_table(8 - (audio_address - 27)));
+    else
+      audio_data <= x"80";
+    end if;
+    
+    -- Strobe sample_ready at 48KHz
+    if audio_counter /= 2083 then
+      audio_counter <= audio_counter + 1;
+      sample_ready <= false;
+    else
+      audio_l(15 downto 8) <= audio_data;
+      audio_r(15 downto 8) <= audio_data;
+      -- 48KHz sample rate, so 200Hz requires dividing by ~240
+      if sample_repeat /= 240 then
+        sample_repeat <= sample_repeat + 1;
+      else
+        sample_repeat <= 0;
+        if audio_address /= 35 then
+          audio_address <= audio_address + 1;
+        else
+          audio_address <= 0;
+        end if;
+      end if;
+      sample_ready <= true;
+    end if;
+    
+  end if;
+end process;
+
+
 end Behavioral;

@@ -17,7 +17,7 @@ else
 endif
 
 cat ../vivado/mega65r2_top.tcl | sed 's/mega65r2/'${target}'/g'  | sed 's/xc7a100tfgg484-1/'${fpga}'/g'
-foreach f (vhdl/*.vhd* verilog/*.v ${target}/*.vhd*)
+foreach f (vhdl/*.vhd vhdl/*.vhdl verilog/*.v ${target}/*.vhd ${target}/*.vhdl )
   echo '"[file normalize "$origin_dir/src/'${f}'"]"\'
 end
 cat ../vivado/mega65r2_middle.tcl | sed 's/mega65r2/'${target}'/g' | sed 's/xc7a100tfgg484-1/'${fpga}'/g'
