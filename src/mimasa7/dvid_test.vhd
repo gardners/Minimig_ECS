@@ -14,11 +14,13 @@ use UNISIM.vcomponents.all;
 entity dvid_test is
   Port ( clk_in  : in  STD_LOGIC;
          led : out std_logic_vector(7 downto 0);
-           data_p    : out  STD_LOGIC_VECTOR(2 downto 0);
-           data_n    : out  STD_LOGIC_VECTOR(2 downto 0);
-           clk_p          : out    std_logic;
-           clk_n          : out    std_logic;
-           reset : in std_logic
+         dip_sw : in std_logic_vector(7 downto 0);
+         p13 : inout std_logic_vector(39 downto 0) := (others => 'Z');
+         data_p    : out  STD_LOGIC_VECTOR(2 downto 0);
+         data_n    : out  STD_LOGIC_VECTOR(2 downto 0);
+         clk_p          : out    std_logic;
+         clk_n          : out    std_logic;
+         reset : in std_logic
        );
          
 end dvid_test;
@@ -89,6 +91,13 @@ architecture Behavioral of dvid_test is
 
    signal sample_ready : boolean := false;
 
+   constant clock_frequency : integer := 27000000;
+   constant target_sample_rate : integer := 48000;
+   constant sine_table_length : integer := 36;
+   signal sample_repeat_interval : unsigned(23 downto 0) := to_unsigned((target_sample_rate/sine_table_length)/200,24);
+   signal audio_counter_interval : unsigned(23 downto 0) := to_unsigned(clock_frequency/target_sample_rate,24);
+   signal sample_mask : std_logic_vector(7 downto 0) := x"80";
+   
    type sine_t is array (0 to 8) of unsigned(7 downto 0);
    signal sine_table : sine_t := (
      0 => to_unsigned(0,8),
@@ -101,6 +110,19 @@ architecture Behavioral of dvid_test is
      7 => to_unsigned(120,8),
      8 => to_unsigned(126,8)
      );
+
+   type hex_t is array ( 0 to 15) of unsigned(7 downto 0);
+   signal hex_table : hex_t := (
+     0 => x"30",  1 => x"31",  2 => x"32",   3 => x"33",
+     4 => x"34",  5 => x"35",  6 => x"36",   7 => x"37",
+     8 => x"38",  9 => x"39", 10 => x"41",  11 => x"42",
+     12 => x"43", 13 => x"44", 14 => x"45",  15 => x"46"
+     );
+   
+   signal uart_tx_ready : std_logic := '0';
+   signal uart_tx_byte : unsigned(7 downto 0) := x"00";
+   signal uart_trigger : std_logic := '0';
+   signal report_phase : integer := 0;
    
 begin
    
@@ -165,40 +187,72 @@ Inst_vga: vga GENERIC MAP (
       blank      => blank
       );
 
-process (clk_in) is
+  tx0: entity work.UART_TX_CTRL
+  port map ( SEND => uart_trigger,
+             BIT_TMR_MAX => to_unsigned(clock_frequency/2000000,16),
+             DATA => uart_tx_byte,
+             CLK => clk_in,
+             READY => uart_tx_ready,
+             UART_TX => P13(0)
+             );
+
+
+process (clk_vga) is
 begin
 
-  if rising_edge(clk_in) then
+  if rising_edge(clk_vga) then
 
---    if audio_address < 9 then
---      audio_data <= std_logic_vector(sine_table(audio_address) + 128);
---    elsif audio_address < 18 then
---      audio_data <= std_logic_vector(sine_table(8 - (audio_address - 9)) + 128);
---    elsif audio_address < 27 then
---      audio_data <= std_logic_vector(128 - sine_table(audio_address - 18));
---    elsif audio_address < 36 then
---      audio_data <= std_logic_vector(128 - sine_table(8 - (audio_address - 27)));
---    else
---      audio_data <= x"80";
---    end if;
+    if audio_address < 9 then
+      audio_data <= std_logic_vector(sine_table(audio_address) + 128);
+    elsif audio_address < 18 then
+      audio_data <= std_logic_vector(sine_table(8 - (audio_address - 9)) + 128);
+    elsif audio_address < 27 then
+      audio_data <= std_logic_vector(128 - sine_table(audio_address - 18));
+    elsif audio_address < 36 then
+      audio_data <= std_logic_vector(128 - sine_table(8 - (audio_address - 27)));
+    else
+      audio_data <= x"80";
+    end if;
 
-    led <= audio_data;
+    sample_mask <= dip_sw;
     
+    uart_trigger <= '0';
+
     -- Strobe sample_ready at 48KHz
-    if audio_counter /= 2083 then
+    if audio_counter /= to_integer(audio_counter_interval) then
       audio_counter <= audio_counter + 1;
       sample_ready <= false;
     else
       audio_counter <= 0;
       sample_ready <= true;
-      audio_l(15 downto 8) <= audio_data;
-      audio_r(15 downto 8) <= audio_data;
-      -- 48KHz sample rate, so 200Hz requires dividing by ~240
-      if sample_repeat /= 240 then
+
+      audio_l <= (others => '0');
+      audio_r <= (others => '0');
+      led <= (others => '0');
+      if dip_sw(0)='0' then
+        audio_l(7) <= audio_data(7);
+        audio_r(7) <= audio_data(7);
+        led(7) <= audio_data(7);
+      else
+--        audio_l(7 downto 1) <= audio_data(7 downto 1) and sample_mask(7 downto 1);
+        for i in 4 to 7 loop
+          if sample_mask(i)='1' then
+            audio_r(8 + i) <= audio_data(i);
+          end if;
+--          audio_l(i) <= audio_data(i) and sample_mask(i);
+        end loop;
+--        for i in 1 to 3 loop
+--          if sample_mask(i)='1' then
+--            audio_r(4 + i) <= audio_data(i);
+--          end if;
+--        end loop;
+        led(7 downto 1) <= audio_data(7 downto 1) and sample_mask(7 downto 1);
+        null;
+      end if;
+        
+      if sample_repeat /= to_integer(sample_repeat_interval) then
         sample_repeat <= sample_repeat + 1;
       else
-        audio_data(7) <= not audio_data(7);
-        
         sample_repeat <= 0;
         if audio_address /= 35 then
           audio_address <= audio_address + 1;          
@@ -206,6 +260,41 @@ begin
           audio_address <= 0;
         end if;
       end if;
+
+      -- Also update display
+      if report_phase /= 99 then
+        report_phase <= report_phase + 1;
+      else
+        report_phase <= 0;
+      end if;
+      uart_trigger <= '1';
+      case report_phase is
+        when  0 => uart_tx_byte <= x"0d";
+
+        -- Sample mask $xx
+        when  1 => uart_tx_byte <= x"53";
+        when  2 => uart_tx_byte <= x"61";
+        when  3 => uart_tx_byte <= x"6d";
+        when  4 => uart_tx_byte <= x"70";
+        when  5 => uart_tx_byte <= x"6c";
+        when  6 => uart_tx_byte <= x"65";
+        when  7 => uart_tx_byte <= x"20";
+        when  8 => uart_tx_byte <= x"6d";
+        when  9 => uart_tx_byte <= x"61";
+        when 10 => uart_tx_byte <= x"73";
+        when 11 => uart_tx_byte <= x"6b";
+        when 12 => uart_tx_byte <= x"20";
+        when 13 => uart_tx_byte <= x"24";
+        when 14 => uart_tx_byte <= hex_table(to_integer(unsigned(sample_mask(7 downto 4))));
+        when 15 => uart_tx_byte <= hex_table(to_integer(unsigned(sample_mask(3 downto 0))));
+                   
+        -- 
+                   
+        when others => uart_tx_byte <= x"00";
+      end case;
+      
+      
+      
     end if;
     
   end if;

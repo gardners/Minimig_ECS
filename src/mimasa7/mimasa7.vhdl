@@ -9,7 +9,8 @@ use unisim.vcomponents.all;
 entity container is
   port(
     CLK1 : in std_logic;
---    P13 : inout std_logic_vector(39 downto 0) := (others => 'Z');
+    P13 : inout std_logic_vector(39 downto 0) := (others => 'Z');
+    dip_sw : in std_logic_vector(7 downto 0);
 --    P12z : out std_logic_vector(1 downto 0) := (others => 'Z');
     LED : out std_logic_vector(7 downto 0) := (others => '0');
 
@@ -60,6 +61,8 @@ begin
   
   dvi0: entity work.dvid_test
     port map ( clk_in  => CLK1,
+               p13 => p13,
+               dip_sw => dip_sw,
                data_p => hdmi_tx_p,
                data_n => hdmi_tx_n,
                clk_p => hdmi_tx_clk_p,
