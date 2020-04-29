@@ -26,47 +26,16 @@ entity dvid_test is
 end dvid_test;
 
 architecture Behavioral of dvid_test is
-   component clocking
-   port (
-      -- Clock in ports
-      clk_in           : in     std_logic;
-      -- Clock out ports
-      CLK_DVI          : out    std_logic;
-      CLK_DVIn         : out    std_logic;
-      CLK_VGA          : out    std_logic;
-      reset : in std_logic
-   );
-   end component;
 
-   COMPONENT vga
-   generic (
-      hRez        : natural;
-      hStartSync  : natural;
-      hEndSync    : natural;
-      hMaxCount   : natural;
-      hsyncActive : std_logic;
-
-      vRez        : natural;
-      vStartSync  : natural;
-      vEndSync    : natural;
-      vMaxCount   : natural;
-      vsyncActive : std_logic
-    );
-
-   PORT(
-      pixelClock : IN std_logic;          
-      Red : OUT std_logic_vector(7 downto 0);
-      Green : OUT std_logic_vector(7 downto 0);
-      Blue : OUT std_logic_vector(7 downto 0);
-      hSync : OUT std_logic;
-      vSync : OUT std_logic;
-      blank : OUT std_logic
-      );
-   END COMPONENT;
-
-   signal clk_dvi  : std_logic := '0';
-   signal clk_dvin : std_logic := '0';
-   signal clk_vga  : std_logic := '0';
+   signal clock27    : std_logic := '0';
+   signal clock41    : std_logic := '0';
+   signal clock50    : std_logic := '0';
+   signal clock81    : std_logic := '0';
+   signal clock100   : std_logic := '0';
+   signal clock135p  : std_logic := '0';
+   signal clock135n  : std_logic := '0';
+   signal clock163   : std_logic := '0';
+   signal clock325   : std_logic := '0';
 
    signal red     : std_logic_vector(7 downto 0) := (others => '0');
    signal green   : std_logic_vector(7 downto 0) := (others => '0');
@@ -74,6 +43,7 @@ architecture Behavioral of dvid_test is
    signal hsync   : std_logic := '0';
    signal vsync   : std_logic := '0';
    signal blank   : std_logic := '0';
+   signal inframe : std_logic := '0';
    signal red_s   : std_logic_vector(0 downto 0);
    signal green_s : std_logic_vector(0 downto 0);
    signal blue_s  : std_logic_vector(0 downto 0);
@@ -127,19 +97,25 @@ architecture Behavioral of dvid_test is
 begin
    
    
-clocking_inst : clocking port map (
+clocking_inst : entity work.clocking port map (
       clk_in   => clk_in,
       -- Clock out ports
-      CLK_DVI  => clk_dvi,  -- for 640x480@60Hz : 125MHZ
-      CLK_DVIn => clk_dvin, -- for 640x480@60Hz : 125MHZ, 180 degree phase shift
-      CLK_VGA  => clk_vga,   -- for 640x480@60Hz : 25MHZ 
+      clock27 => clock27,
+      clock41 => clock41,
+      clock50 => clock50,
+      clock81 => clock81,
+      clock100 => clock100,
+      clock135p => clock135p,
+      clock135n => clock135n,
+      clock163 => clock163,
+      clock325 => clock325,
       reset => reset
     );
 
 Inst_dvid: entity work.dvid PORT MAP(
-      clk       => clk_dvi,
-      clk_n     => clk_dvin, 
-      clk_pixel => clk_vga,
+      clk       => clock135p,
+      clk_n     => clock135n, 
+      clk_pixel => clock27,
       clk_pixel_en => true,
       
       red_p     => red,
@@ -172,20 +148,31 @@ OBUFDS_blue  : OBUFDS port map ( O  => DATA_P(0), OB => DATA_N(0), I  => blue_s(
 OBUFDS_red   : OBUFDS port map ( O  => DATA_P(1), OB => DATA_N(1), I  => green_s(0) );
 OBUFDS_green : OBUFDS port map ( O  => DATA_P(2), OB => DATA_N(2), I  => red_s(0)   );
 OBUFDS_clock : OBUFDS port map ( O  => CLK_P, OB => CLK_N, I  => clock_s(0) );
-    -- generic map ( IOSTANDARD => "DEFAULT")    
-   
-Inst_vga: vga GENERIC MAP (
-      hRez       => 720, hStartSync => 732, hEndSync   => 796, hMaxCount  => 861, hsyncActive => '0',
-      vRez       => 576, vStartSync => 587, vEndSync   => 592, vMaxCount  => 623, vsyncActive => '1'
-   ) PORT MAP(
-      pixelClock => clk_vga,
-      Red        => red,
-      Green      => green,
-      Blue       => blue,
-      hSync      => hSync,
-      vSync      => vSync,
-      blank      => blank
-      );
+
+pixeldriver0: entity work.pixel_driver port map (
+  cpuclock => clock41,
+  clock81 => clock81,
+  clock162 => clock163,
+  clock27 => clock27,
+
+  pal50_select => dip_sw(1),
+  vga60_select => '0',
+  test_pattern_enable => '1',
+  hsync_invert => '0',
+  vsync_invert => '0',
+
+  red_i => to_unsigned(0,8),
+  green_i => to_unsigned(0,8),
+  blue_i => to_unsigned(0,8),
+
+  std_logic_vector(red_o) => red,
+  std_logic_vector(green_o) => green,
+  std_logic_vector(blue_o) => blue,
+  vga_hsync => hsync,
+  vsync => vsync,
+  inframe   => inframe
+
+  );
 
   tx0: entity work.UART_TX_CTRL
   port map ( SEND => uart_trigger,
@@ -197,10 +184,12 @@ Inst_vga: vga GENERIC MAP (
              );
 
 
-process (clk_vga) is
+process (clock27) is
 begin
 
-  if rising_edge(clk_vga) then
+  blank <= not inframe;
+  
+  if rising_edge(clock27) then
 
     if audio_address < 9 then
       audio_data <= std_logic_vector(sine_table(audio_address) + 128);
