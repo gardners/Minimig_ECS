@@ -473,7 +473,7 @@ begin
       case video_state is
         when VS_BLANKING =>
           if EnhancedMode then
-            infoframes <= infoframes + 1;               
+--            infoframes <= infoframes + 1;               
             
             if blank = '0' then -- check for early warning
               video_state <= VS_VIDEO_PRE;
