@@ -42,6 +42,14 @@ entity dvid is
            hsync         : in  STD_LOGIC;
            vsync         : in  STD_LOGIC;
 
+           infoframes : inout unsigned(7 downto 0) := x"00";
+           EnhancedModeReturn  : out  boolean;
+           IsProgressiveReturn : out  boolean;
+           IsPALReturn         : out  boolean;
+           Is30kHzReturn       : out  boolean;
+           Limited_RangeReturn : out  boolean;
+           WidescreenReturn    : out  boolean;
+           
            EnhancedMode  : in  boolean;
            IsProgressive : in  boolean;
            IsPAL         : in  boolean;
@@ -155,7 +163,10 @@ architecture Behavioral of dvid is
   -- audio
   type enable_syncer_t is array(2 downto 0) of boolean;
 
+  -- Copy allowed, 48KHz audio, 16 bit samples
   signal channel_status    : std_logic_vector(191 downto 0) := x"00000000000000000000000000000000000000020200f904";
+
+  
   signal channel_bit       : natural range 0 to 191 := 0;
   signal sample_count      : natural range 0 to 3   := 0;
   signal left_buffer       : std_logic_vector(15 downto 0);
@@ -300,9 +311,16 @@ begin
   dvid_clock <= out_clock;
 
   -- select between the output of the various encoders
-  process(clk_pixel, clk_pixel_en)
+  process(clk_pixel, clk_pixel_en, EnhancedMode, IsProgressive, Is30kHz, Limited_Range, Widescreen)
   begin
     if rising_edge(clk_pixel) and clk_pixel_en then
+      EnhancedModeReturn <= EnhancedMode;
+      IsProgressiveReturn <= IsProgressive;
+      IsPALReturn <= IsPAL;
+      Is30kHzReturn <= Is30kHz;
+      Limited_RangeReturn <= Limited_Range;
+      WidescreenReturn <= Widescreen;
+      
       case seq_encmode is
         when ENC_TMDS =>
           latched_red   <= tmds_red;
@@ -455,6 +473,8 @@ begin
       case video_state is
         when VS_BLANKING =>
           if EnhancedMode then
+            infoframes <= infoframes + 1;               
+            
             if blank = '0' then -- check for early warning
               video_state <= VS_VIDEO_PRE;
               seq_start   <= true;
@@ -466,6 +486,7 @@ begin
               seq_start   <= true;
 
               if audio_needs_acr then
+
                 -- send an Audio Clock Regeneration packet ASAP
                 seq_address    <= UCode_Addr_TwoPackets;
                 ifr_prevselect <= ifr_select;

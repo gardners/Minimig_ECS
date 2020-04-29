@@ -123,6 +123,14 @@ architecture Behavioral of dvid_test is
    signal uart_tx_byte : unsigned(7 downto 0) := x"00";
    signal uart_trigger : std_logic := '0';
    signal report_phase : integer := 0;
+
+   type flag_array is array (0 to 7) of boolean;
+   signal retflags : flag_array := (others => false);   
+   signal flags : flag_array := (others => false);
+   signal hi : unsigned(7 downto 0) := x"00";
+   signal lo : unsigned(7 downto 0) := x"00";
+
+   signal infoframes : unsigned(7 downto 0);
    
 begin
    
@@ -149,12 +157,27 @@ Inst_dvid: entity work.dvid PORT MAP(
       hsync     => hsync,
       vsync     => vsync,
 
-      EnhancedMode => true,
-      IsProgressive => true,
-      IsPAL => true,
-      Is30kHz => true,
-      Limited_Range => true,
-      Widescreen => false,
+--      EnhancedMode => true,
+--      IsProgressive => true,
+--      IsPAL => false,
+--      Is30kHz => true,
+--      Limited_Range => false,
+--      Widescreen => false,
+
+      EnhancedModeReturn => retflags(1),
+      IsProgressiveReturn => retflags(2),
+      IsPALReturn => retflags(3),
+      Is30kHzReturn => retflags(4),
+      Limited_RangeReturn => retflags(5),
+      WidescreenReturn => retflags(6),
+      InfoFrames => infoframes,
+      
+      EnhancedMode =>  flags(1),
+      IsProgressive => flags(2),
+      IsPAL => false, -- flags(3),
+      Is30kHz => flags(4),
+      Limited_Range => false, -- flags(5),
+      Widescreen => false, -- flags(6),
 
       HDMI_audio_L => audio_L,
       HDMI_audio_R => audio_R,
@@ -175,8 +198,12 @@ OBUFDS_clock : OBUFDS port map ( O  => CLK_P, OB => CLK_N, I  => clock_s(0) );
     -- generic map ( IOSTANDARD => "DEFAULT")    
    
 Inst_vga: vga GENERIC MAP (
-      hRez       => 720, hStartSync => 732, hEndSync   => 796, hMaxCount  => 861, hsyncActive => '0',
-      vRez       => 576, vStartSync => 587, vEndSync   => 592, vMaxCount  => 623, vsyncActive => '1'
+-- 640x480p60
+      hRez       => 640, hStartSync => 656, hEndSync   => 752, hMaxCount  => 800, hsyncActive => '0',
+      vRez       => 480, vStartSync => 490, vEndSync   => 492, vMaxCount  => 525, vsyncActive => '1'
+-- 576p50
+--      hRez       => 720, hStartSync => 732, hEndSync   => 796, hMaxCount  => 861, hsyncActive => '0',
+--      vRez       => 576, vStartSync => 587, vEndSync   => 592, vMaxCount  => 623, vsyncActive => '1'
    ) PORT MAP(
       pixelClock => clk_vga,
       Red        => red,
@@ -189,7 +216,7 @@ Inst_vga: vga GENERIC MAP (
 
   tx0: entity work.UART_TX_CTRL
   port map ( SEND => uart_trigger,
-             BIT_TMR_MAX => to_unsigned(clock_frequency/2000000,16),
+             BIT_TMR_MAX => to_unsigned(100000000/2000000,16),
              DATA => uart_tx_byte,
              CLK => clk_in,
              READY => uart_tx_ready,
@@ -207,14 +234,29 @@ begin
     elsif audio_address < 18 then
       audio_data <= std_logic_vector(sine_table(8 - (audio_address - 9)) + 128);
     elsif audio_address < 27 then
-      audio_data <= std_logic_vector(128 - sine_table(audio_address - 18));
+      audio_data <= std_logic_vector(127 - sine_table(audio_address - 18));
     elsif audio_address < 36 then
-      audio_data <= std_logic_vector(128 - sine_table(8 - (audio_address - 27)));
+      audio_data <= std_logic_vector(127 - sine_table(8 - (audio_address - 27)));
     else
       audio_data <= x"80";
     end if;
 
     sample_mask <= dip_sw;
+
+    for i in 0 to 7 loop
+      if dip_sw(i)='0' then
+        lo(i) <= '1';
+      else
+        lo(i) <= '0';
+      end  if;
+      if dip_sw(i)='1' then
+        flags(i) <= true;
+        hi(i) <= '1';
+      else
+        flags(i) <= false;
+        hi(i) <= '0';
+      end if;
+    end loop;    
     
     uart_trigger <= '0';
 
@@ -224,7 +266,7 @@ begin
       sample_ready <= false;
     else
       audio_counter <= 0;
-      sample_ready <= true;
+      sample_ready <= true and flags(7);
 
       audio_l <= (others => '0');
       audio_r <= (others => '0');
@@ -289,6 +331,48 @@ begin
         when 15 => uart_tx_byte <= hex_table(to_integer(unsigned(sample_mask(3 downto 0))));
                    
         -- 
+        when 16 => uart_tx_byte <= x"2e";
+        when 17 => uart_tx_byte <= x"20";
+        when 18 => uart_tx_byte <= x"44";
+        when 19 => uart_tx_byte <= x"49";
+        when 20 => uart_tx_byte <= x"50";
+        when 21 => uart_tx_byte <= x"75";
+        when 22 => uart_tx_byte <= x"20";
+        when 23 => uart_tx_byte <= x"24";
+        when 24 => uart_tx_byte <= hex_table(to_integer(unsigned(dip_sw(7 downto 4))));
+        when 25 => uart_tx_byte <= hex_table(to_integer(unsigned(dip_sw(3 downto 0))));
+
+        when 26 => uart_tx_byte <= x"2e";
+        when 27 => uart_tx_byte <= x"20";
+        when 28 => uart_tx_byte <= x"4c";
+        when 29 => uart_tx_byte <= x"4f";
+        when 30 => uart_tx_byte <= x"3d";
+        when 31 => uart_tx_byte <= x"48";
+        when 32 => uart_tx_byte <= x"49";
+        when 33 => uart_tx_byte <= x"20";
+        when 34 => uart_tx_byte <= hex_table(to_integer(unsigned(lo(7 downto 4))));
+        when 35 => uart_tx_byte <= hex_table(to_integer(unsigned(lo(3 downto 0))));
+        when 36 => uart_tx_byte <= hex_table(to_integer(unsigned(hi(7 downto 4))));
+        when 37 => uart_tx_byte <= hex_table(to_integer(unsigned(hi(3 downto 0))));
+        when 38 => uart_tx_byte <= x"20";
+        when 39 => if flags(0) then uart_tx_byte <= x"30"; else uart_tx_byte <= x"2e"; end if;
+        when 40 => if flags(1) then uart_tx_byte <= x"31"; else uart_tx_byte <= x"2e"; end if;
+        when 41 => if flags(2) then uart_tx_byte <= x"32"; else uart_tx_byte <= x"2e"; end if;
+        when 42 => if flags(3) then uart_tx_byte <= x"33"; else uart_tx_byte <= x"2e"; end if;
+        when 43 => if flags(4) then uart_tx_byte <= x"34"; else uart_tx_byte <= x"2e"; end if;
+        when 44 => if flags(5) then uart_tx_byte <= x"35"; else uart_tx_byte <= x"2e"; end if;
+        when 45 => if flags(6) then uart_tx_byte <= x"36"; else uart_tx_byte <= x"2e"; end if;
+        when 46 => if flags(7) then uart_tx_byte <= x"37"; else uart_tx_byte <= x"2e"; end if;
+        when 47 => uart_tx_byte <= x"20";
+        when 48 => if retflags(1) then uart_tx_byte <= x"31"; else uart_tx_byte <= x"2e"; end if;
+        when 49 => if retflags(2) then uart_tx_byte <= x"32"; else uart_tx_byte <= x"2e"; end if;
+        when 50 => if retflags(3) then uart_tx_byte <= x"33"; else uart_tx_byte <= x"2e"; end if;
+        when 51 => if retflags(4) then uart_tx_byte <= x"34"; else uart_tx_byte <= x"2e"; end if;
+        when 52 => if retflags(5) then uart_tx_byte <= x"35"; else uart_tx_byte <= x"2e"; end if;
+        when 53 => if retflags(6) then uart_tx_byte <= x"36"; else uart_tx_byte <= x"2e"; end if;
+        when 54 => uart_tx_byte <= x"20";
+        when 55 => uart_tx_byte <= hex_table(to_integer(infoframes(7 downto 4)));
+        when 56 => uart_tx_byte <= hex_table(to_integer(infoframes(3 downto 0)));
                    
         when others => uart_tx_byte <= x"00";
       end case;
