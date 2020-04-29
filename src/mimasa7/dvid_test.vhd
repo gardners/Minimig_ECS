@@ -157,12 +157,12 @@ Inst_dvid: entity work.dvid PORT MAP(
       hsync     => hsync,
       vsync     => vsync,
 
---      EnhancedMode => true,
---      IsProgressive => true,
---      IsPAL => false,
---      Is30kHz => true,
---      Limited_Range => false,
---      Widescreen => false,
+      EnhancedMode => true,
+      IsProgressive => true,
+      IsPAL => false,
+      Is30kHz => true,
+      Limited_Range => false,
+      Widescreen => false,
 
       EnhancedModeReturn => retflags(1),
       IsProgressiveReturn => retflags(2),
@@ -172,12 +172,12 @@ Inst_dvid: entity work.dvid PORT MAP(
       WidescreenReturn => retflags(6),
       InfoFrames => infoframes,
       
-      EnhancedMode =>  flags(1),
-      IsProgressive => flags(2),
-      IsPAL => false, -- flags(3),
-      Is30kHz => flags(4),
-      Limited_Range => false, -- flags(5),
-      Widescreen => false, -- flags(6),
+--      EnhancedMode =>  flags(1),
+--      IsProgressive => flags(2),
+--      IsPAL => false, -- flags(3),
+--      Is30kHz => flags(4),
+--      Limited_Range => false, -- flags(5),
+--      Widescreen => false, -- flags(6),
 
       HDMI_audio_L => audio_L,
       HDMI_audio_R => audio_R,
@@ -266,7 +266,7 @@ begin
       sample_ready <= false;
     else
       audio_counter <= 0;
-      sample_ready <= true and flags(7);
+      sample_ready <= true;
 
       audio_l <= (others => '0');
       audio_r <= (others => '0');
@@ -276,18 +276,8 @@ begin
         audio_r(7) <= audio_data(7);
         led(7) <= audio_data(7);
       else
---        audio_l(7 downto 1) <= audio_data(7 downto 1) and sample_mask(7 downto 1);
-        for i in 4 to 7 loop
-          if sample_mask(i)='1' then
-            audio_r(8 + i) <= audio_data(i);
-          end if;
---          audio_l(i) <= audio_data(i) and sample_mask(i);
-        end loop;
---        for i in 1 to 3 loop
---          if sample_mask(i)='1' then
---            audio_r(4 + i) <= audio_data(i);
---          end if;
---        end loop;
+        audio_l(12 downto 6) <= audio_data(7 downto 1) and sample_mask(7 downto 1);
+        audio_r(12 downto 6) <= audio_data(7 downto 1) and sample_mask(7 downto 1);
         led(7 downto 1) <= audio_data(7 downto 1) and sample_mask(7 downto 1);
         null;
       end if;
