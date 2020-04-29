@@ -172,13 +172,6 @@ Inst_dvid: entity work.dvid PORT MAP(
       WidescreenReturn => retflags(6),
       InfoFrames => infoframes,
       
---      EnhancedMode =>  flags(1),
---      IsProgressive => flags(2),
---      IsPAL => false, -- flags(3),
---      Is30kHz => flags(4),
---      Limited_Range => false, -- flags(5),
---      Widescreen => false, -- flags(6),
-
       HDMI_audio_L => audio_L,
       HDMI_audio_R => audio_R,
       HDMI_LeftEnable => true,
@@ -199,11 +192,11 @@ OBUFDS_clock : OBUFDS port map ( O  => CLK_P, OB => CLK_N, I  => clock_s(0) );
    
 Inst_vga: vga GENERIC MAP (
 -- 640x480p60
-      hRez       => 640, hStartSync => 656, hEndSync   => 752, hMaxCount  => 800, hsyncActive => '0',
-      vRez       => 480, vStartSync => 490, vEndSync   => 492, vMaxCount  => 525, vsyncActive => '1'
+--      hRez       => 640, hStartSync => 656, hEndSync   => 752, hMaxCount  => 800, hsyncActive => '0',
+--      vRez       => 480, vStartSync => 490, vEndSync   => 492, vMaxCount  => 525, vsyncActive => '1'
 -- 576p50
---      hRez       => 720, hStartSync => 732, hEndSync   => 796, hMaxCount  => 861, hsyncActive => '0',
---      vRez       => 576, vStartSync => 587, vEndSync   => 592, vMaxCount  => 623, vsyncActive => '1'
+      hRez       => 720, hStartSync => 732, hEndSync   => 796, hMaxCount  => 861, hsyncActive => '0',
+      vRez       => 576, vStartSync => 587, vEndSync   => 592, vMaxCount  => 623, vsyncActive => '1'
    ) PORT MAP(
       pixelClock => clk_vga,
       Red        => red,

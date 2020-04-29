@@ -35,7 +35,7 @@ begin
 
     -- Create 812.5MHz clock from 8.125x100MHz/1
     DIVCLK_DIVIDE        => 1,
-    CLKFBOUT_MULT_F      => 7.5, -- 8.125, -- get 25/125 instead of 27/135mhz
+    CLKFBOUT_MULT_F      => 8.125, -- get 25/125 instead of 27/135mhz
     CLKFBOUT_PHASE       => 0.000,
     CLKFBOUT_USE_FINE_PS => FALSE,
 
