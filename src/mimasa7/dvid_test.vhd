@@ -55,15 +55,20 @@ architecture Behavioral of dvid_test is
 
    signal audio_counter : integer := 0;
    signal sample_repeat : integer := 0;
+   signal sine_repeat : integer := 0;
    signal audio_address : integer := 0;
    signal audio_data : std_logic_vector(7 downto 0) := x"00";
-
+   signal sample_addr : integer := 0;
+   signal sample_rdata : std_logic_vector(7 downto 0) := x"00";
+   signal sample_rdata_drive : std_logic_vector(7 downto 0) := x"00";
+   
    signal sample_ready : boolean := false;
 
    constant clock_frequency : integer := 27000000;
    constant target_sample_rate : integer := 48000;
    constant sine_table_length : integer := 36;
-   signal sample_repeat_interval : unsigned(23 downto 0) := to_unsigned((target_sample_rate/sine_table_length)/200,24);
+   signal sine_repeat_interval : unsigned(23 downto 0) := to_unsigned((target_sample_rate/sine_table_length)/200,24);
+   signal sample_repeat_interval : unsigned(23 downto 0) := to_unsigned((target_sample_rate/8000),24);
    signal audio_counter_interval : unsigned(23 downto 0) := to_unsigned(clock_frequency/target_sample_rate,24);
    signal sample_mask : std_logic_vector(7 downto 0) := x"80";
    
@@ -182,6 +187,12 @@ pixeldriver0: entity work.pixel_driver port map (
              UART_TX => P13(0)
              );
 
+sample0: entity work.audio_data
+  port map (
+    clka => clock27,
+    addressa => sample_addr,
+    doa => sample_rdata
+    );
 
 process (clock27) is
 begin
@@ -201,6 +212,7 @@ begin
     end if;
 
     sample_mask <= dip_sw;
+    sample_rdata_drive <= sample_rdata;
     
     uart_trigger <= '0';
 
@@ -219,30 +231,31 @@ begin
       led(1) <= vsync;
       led(2) <= blank;
       if dip_sw(0)='0' then
-        audio_l(7) <= audio_data(7);
-        audio_r(7) <= audio_data(7);
+--        audio_l(12 downto 5) <= sample_rdata_drive and sample_mask;
+--        audio_r(12 downto 5) <= sample_rdata_drive and sample_mask;
         led(7) <= audio_data(7);
       else
---        audio_l(7 downto 1) <= audio_data(7 downto 1) and sample_mask(7 downto 1);
-        for i in 4 to 7 loop
-          if sample_mask(i)='1' then
-            audio_r(8 + i) <= audio_data(i);
-          end if;
---          audio_l(i) <= audio_data(i) and sample_mask(i);
-        end loop;
---        for i in 1 to 3 loop
---          if sample_mask(i)='1' then
---            audio_r(4 + i) <= audio_data(i);
---          end if;
---        end loop;
+        audio_l(12 downto 5) <= audio_data and sample_mask;
+        audio_r(12 downto 5) <= audio_data and sample_mask;
         led(7 downto 3) <= audio_data(7 downto 3) and sample_mask(7 downto 3);
         null;
       end if;
-        
+
       if sample_repeat /= to_integer(sample_repeat_interval) then
         sample_repeat <= sample_repeat + 1;
       else
         sample_repeat <= 0;
+        if sample_addr /= 65535 then
+          sample_addr <= sample_addr + 1;
+        else
+          sample_addr <= 0;
+        end if;
+      end if;
+
+      if sine_repeat /= to_integer(sine_repeat_interval) then
+        sine_repeat <= sine_repeat + 1;
+      else
+        sine_repeat <= 0;
         if audio_address /= 35 then
           audio_address <= audio_address + 1;          
         else
