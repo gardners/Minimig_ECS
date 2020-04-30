@@ -78,6 +78,7 @@ entity frame_generator is
 
     lcd_inletterbox : out std_logic := '0';
     vga_inletterbox : out std_logic := '0';
+    vga_blank : out std_logic := '0';
     vga_hsync : out std_logic := '0';
     
     -- For video outputs that are wider
@@ -159,6 +160,7 @@ begin
 
       fullwidth_dataenable <= fullwidth_dataenable_driver;
       narrow_dataenable <= narrow_dataenable_driver;
+      vga_blank <= not narrow_dataenable_driver;
       
       phi2_accumulator <= phi2_accumulator + ticks_per_128_phi2;
       if phi2_accumulator(15) /= last_phi2 then

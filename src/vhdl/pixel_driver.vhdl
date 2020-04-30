@@ -74,7 +74,7 @@ entity pixel_driver is
     vsync_uninverted : out std_logic;
     y_zero : out std_logic;
     x_zero : out std_logic;
-    inframe : out std_logic;
+    vga_blank : out std_logic;
     vga_inletterbox : out std_logic := '0';
 
     -- Indicate when next pixel/raster is expected
@@ -164,6 +164,10 @@ architecture greco_roman of pixel_driver is
   signal vga_inletterbox_pal50 : std_logic := '0';
   signal vga_inletterbox_ntsc60 : std_logic := '0';
   signal vga_inletterbox_vga60 : std_logic := '0';
+
+  signal vga_blank_pal50 : std_logic := '0';
+  signal vga_blank_ntsc60 : std_logic := '0';
+  signal vga_blank_vga60 : std_logic := '0';
 
   signal lcd_pixel_clock_50 : std_logic := '0';
   signal lcd_pixel_clock_60 : std_logic := '0';
@@ -266,6 +270,7 @@ begin
                narrow_dataenable => narrow_dataenable_pal50,
                lcd_inletterbox => lcd_inletterbox_pal50,
                vga_inletterbox => vga_inletterbox_pal50,
+               vga_blank => vga_blank_pal50,
 
                -- 80MHz facing signals for the VIC-IV
                x_zero => x_zero_pal50,
@@ -320,6 +325,7 @@ begin
                narrow_dataenable => narrow_dataenable_ntsc60,
                lcd_inletterbox => lcd_inletterbox_ntsc60,
                vga_inletterbox => vga_inletterbox_ntsc60,
+               vga_blank => vga_blank_ntsc60,
 
                -- 80MHz facing signals for VIC-IV
                x_zero => x_zero_ntsc60,
@@ -373,7 +379,7 @@ begin
                fullwidth_dataenable => fullwidth_dataenable_vga60,
                narrow_dataenable => narrow_dataenable_vga60,
                lcd_inletterbox => lcd_inletterbox_vga60,
-               vga_inletterbox => vga_inletterbox_vga60,
+               vga_blank => vga_blank_vga60,
 
                -- 80MHz facing signals for VIC-IV
                x_zero => x_zero_vga60,
@@ -417,7 +423,10 @@ begin
   vga_inletterbox <= vga_inletterbox_pal50 when pal50_select_internal='1' else
                      vga_inletterbox_vga60 when vga60_select_internal='1'
                      else vga_inletterbox_ntsc60;
-
+  vga_blank <=       vga_blank_pal50 when pal50_select_internal='1' else
+                     vga_blank_vga60 when vga60_select_internal='1'
+                     else vga_blank_ntsc60;
+  
   raster_strobe <= x_zero_pal50 when pal50_select_internal='1' else
                    x_zero_vga60 when vga60_select_internal='1'
                    else x_zero_ntsc60;

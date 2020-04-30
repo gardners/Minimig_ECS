@@ -43,7 +43,6 @@ architecture Behavioral of dvid_test is
    signal hsync   : std_logic := '0';
    signal vsync   : std_logic := '0';
    signal blank   : std_logic := '0';
-   signal inframe : std_logic := '0';
    signal red_s   : std_logic_vector(0 downto 0);
    signal green_s : std_logic_vector(0 downto 0);
    signal blue_s  : std_logic_vector(0 downto 0);
@@ -170,7 +169,7 @@ pixeldriver0: entity work.pixel_driver port map (
   std_logic_vector(blue_o) => blue,
   vga_hsync => hsync,
   vsync => vsync,
-  inframe   => inframe
+  vga_blank   => blank
 
   );
 
@@ -187,8 +186,6 @@ pixeldriver0: entity work.pixel_driver port map (
 process (clock27) is
 begin
 
-  blank <= not inframe;
-  
   if rising_edge(clock27) then
 
     if audio_address < 9 then
@@ -218,6 +215,9 @@ begin
       audio_l <= (others => '0');
       audio_r <= (others => '0');
       led <= (others => '0');
+      led(0) <= hsync;
+      led(1) <= vsync;
+      led(2) <= blank;
       if dip_sw(0)='0' then
         audio_l(7) <= audio_data(7);
         audio_r(7) <= audio_data(7);
@@ -235,7 +235,7 @@ begin
 --            audio_r(4 + i) <= audio_data(i);
 --          end if;
 --        end loop;
-        led(7 downto 1) <= audio_data(7 downto 1) and sample_mask(7 downto 1);
+        led(7 downto 3) <= audio_data(7 downto 3) and sample_mask(7 downto 3);
         null;
       end if;
         
