@@ -227,18 +227,17 @@ begin
       audio_l <= (others => '0');
       audio_r <= (others => '0');
       led <= (others => '0');
-      led(0) <= hsync;
-      led(1) <= vsync;
-      led(2) <= blank;
       if dip_sw(0)='0' then
 --        audio_l(12 downto 5) <= sample_rdata_drive and sample_mask;
 --        audio_r(12 downto 5) <= sample_rdata_drive and sample_mask;
-        led(7) <= audio_data(7);
+        audio_l(12 downto 5) <= x"00";
+        audio_r(12 downto 5) <= x"00";
+--        audio_r(12) <= sample_rdata_drive(7) and sample_mask(7);
+        led <= sample_rdata_drive and sample_mask;
       else
         audio_l(12 downto 5) <= audio_data and sample_mask;
         audio_r(12 downto 5) <= audio_data and sample_mask;
-        led(7 downto 3) <= audio_data(7 downto 3) and sample_mask(7 downto 3);
-        null;
+        led <= audio_data and sample_mask;
       end if;
 
       if sample_repeat /= to_integer(sample_repeat_interval) then
