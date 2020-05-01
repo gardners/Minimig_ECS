@@ -21,7 +21,7 @@ entity dvid_test is
          clk_p          : out    std_logic;
          clk_n          : out    std_logic;
          reset : in std_logic;
-         sample_rdata : in std_logic_vector(7 downto 0);
+         sample_rdata : in std_logic_vector(15 downto 0);
          clock27 : out std_logic
        );
          
@@ -59,7 +59,7 @@ architecture Behavioral of dvid_test is
    signal sine_repeat : integer := 0;
    signal audio_address : integer := 0;
    signal audio_data : std_logic_vector(7 downto 0) := x"00";
-   signal sample_rdata_drive : std_logic_vector(7 downto 0) := x"00";
+   signal sample_rdata_drive : std_logic_vector(15 downto 0) := x"0000";
    
    signal sample_ready : boolean := false;
 
@@ -220,14 +220,14 @@ begin
       audio_l <= (others => '0');
       audio_r <= (others => '0');
       led <= (others => '0');
-      if dip_sw(0)='0' then
+      if dip_sw(0)='1' then
 --        audio_l(12 downto 5) <= sample_rdata_drive and sample_mask;
 --        audio_r(12 downto 5) <= sample_rdata_drive and sample_mask;
 --        audio_l(12 downto 5) <= x"00";
 --        audio_r(12 downto 5) <= x"00";
-        audio_r(12 downto 5) <= sample_rdata_drive and sample_mask;
-        audio_r(15 downto 13) <= (others => sample_rdata_drive(7) and sample_mask(7));
-        led <= sample_rdata_drive and sample_mask;
+        audio_r(15 downto 8) <= sample_rdata_drive(15 downto 8) and sample_mask;
+        audio_r(7 downto 0) <= sample_rdata_drive(7 downto 0) and sample_mask;
+        led <= sample_rdata_drive(15 downto 8) and sample_mask;
       else
         audio_l(12 downto 5) <= audio_data and sample_mask;
         audio_r(12 downto 5) <= audio_data and sample_mask;

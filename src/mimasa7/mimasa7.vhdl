@@ -62,7 +62,7 @@ architecture RTL of container is
   constant target_sample_rate : integer := 48000;
   
   signal sample_addr : integer := 0;
-  signal sample_rdata : std_logic_vector(7 downto 0) := x"00";
+  signal sample_rdata : std_logic_vector(15 downto 0) := x"0000";
   signal sample_repeat : integer := 0;
   signal sample_repeat_interval : unsigned(23 downto 0) := to_unsigned((clock_frequency/8000),24);
   
