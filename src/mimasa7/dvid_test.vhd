@@ -20,14 +20,16 @@ entity dvid_test is
          data_n    : out  STD_LOGIC_VECTOR(2 downto 0);
          clk_p          : out    std_logic;
          clk_n          : out    std_logic;
-         reset : in std_logic
+         reset : in std_logic;
+         sample_rdata : in std_logic_vector(7 downto 0);
+         clock27 : out std_logic
        );
          
 end dvid_test;
 
 architecture Behavioral of dvid_test is
 
-   signal clock27    : std_logic := '0';
+   signal clock27_int    : std_logic := '0';
    signal clock41    : std_logic := '0';
    signal clock50    : std_logic := '0';
    signal clock81    : std_logic := '0';
@@ -54,12 +56,9 @@ architecture Behavioral of dvid_test is
    signal counter : integer := 0;
 
    signal audio_counter : integer := 0;
-   signal sample_repeat : integer := 0;
    signal sine_repeat : integer := 0;
    signal audio_address : integer := 0;
    signal audio_data : std_logic_vector(7 downto 0) := x"00";
-   signal sample_addr : integer := 0;
-   signal sample_rdata : std_logic_vector(7 downto 0) := x"00";
    signal sample_rdata_drive : std_logic_vector(7 downto 0) := x"00";
    
    signal sample_ready : boolean := false;
@@ -68,7 +67,6 @@ architecture Behavioral of dvid_test is
    constant target_sample_rate : integer := 48000;
    constant sine_table_length : integer := 36;
    signal sine_repeat_interval : unsigned(23 downto 0) := to_unsigned((target_sample_rate/sine_table_length)/200,24);
-   signal sample_repeat_interval : unsigned(23 downto 0) := to_unsigned((target_sample_rate/8000),24);
    signal audio_counter_interval : unsigned(23 downto 0) := to_unsigned(clock_frequency/target_sample_rate,24);
    signal sample_mask : std_logic_vector(7 downto 0) := x"80";
    
@@ -104,7 +102,7 @@ begin
 clocking_inst : entity work.clocking port map (
       clk_in   => clk_in,
       -- Clock out ports
-      clock27 => clock27,
+      clock27 => clock27_int,
       clock41 => clock41,
       clock50 => clock50,
       clock81 => clock81,
@@ -119,7 +117,7 @@ clocking_inst : entity work.clocking port map (
 Inst_dvid: entity work.dvid PORT MAP(
       clk       => clock135p,
       clk_n     => clock135n, 
-      clk_pixel => clock27,
+      clk_pixel => clock27_int,
       clk_pixel_en => true,
       
       red_p     => red,
@@ -157,7 +155,7 @@ pixeldriver0: entity work.pixel_driver port map (
   cpuclock => clock41,
   clock81 => clock81,
   clock162 => clock163,
-  clock27 => clock27,
+  clock27 => clock27_int,
 
   pal50_select => dip_sw(1),
   vga60_select => '0',
@@ -187,17 +185,12 @@ pixeldriver0: entity work.pixel_driver port map (
              UART_TX => P13(0)
              );
 
-sample0: entity work.audio_data
-  port map (
-    clka => clock27,
-    addressa => sample_addr,
-    doa => sample_rdata
-    );
-
-process (clock27) is
+process (clock27_int) is
 begin
 
-  if rising_edge(clock27) then
+  clock27 <= clock27_int;
+  
+  if rising_edge(clock27_int) then
 
     if audio_address < 9 then
       audio_data <= std_logic_vector(sine_table(audio_address) + 128);
@@ -232,23 +225,13 @@ begin
 --        audio_r(12 downto 5) <= sample_rdata_drive and sample_mask;
         audio_l(12 downto 5) <= x"00";
         audio_r(12 downto 5) <= x"00";
-        audio_r(12) <= sample_rdata_drive(7) and sample_mask(7);
+        audio_r(12 downto 9) <= sample_rdata_drive(7 downto 4) and sample_mask(7 downto 4);
+        audio_r(15 downto 13) <= (others => sample_rdata_drive(7) and sample_mask(7));
         led <= sample_rdata_drive and sample_mask;
       else
         audio_l(12 downto 5) <= audio_data and sample_mask;
         audio_r(12 downto 5) <= audio_data and sample_mask;
         led <= audio_data and sample_mask;
-      end if;
-
-      if sample_repeat /= to_integer(sample_repeat_interval) then
-        sample_repeat <= sample_repeat + 1;
-      else
-        sample_repeat <= 0;
-        if sample_addr /= 65535 then
-          sample_addr <= sample_addr + 1;
-        else
-          sample_addr <= 0;
-        end if;
       end if;
 
       if sine_repeat /= to_integer(sine_repeat_interval) then

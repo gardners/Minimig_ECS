@@ -55,12 +55,23 @@ architecture RTL of container is
   signal vga_hsync : std_logic := '0';
   signal vga_vsync : std_logic := '0';
   signal in_frame : std_logic := '0';
+
+  signal clock27 : std_logic := '0';
+
+  constant clock_frequency : integer := 27000000;
+  constant target_sample_rate : integer := 48000;
+  
+  signal sample_addr : integer := 0;
+  signal sample_rdata : std_logic_vector(7 downto 0) := x"00";
+  signal sample_repeat : integer := 0;
+  signal sample_repeat_interval : unsigned(23 downto 0) := to_unsigned((clock_frequency/8000),24);
   
 begin
 
   
   dvi0: entity work.dvid_test
     port map ( clk_in  => CLK1,
+               clock27 => clock27,
                p13 => p13,
                dip_sw => dip_sw,
                data_p => hdmi_tx_p,
@@ -68,9 +79,35 @@ begin
                clk_p => hdmi_tx_clk_p,
                clk_n => hdmi_tx_clk_n,
                led => led,
-               reset => reset
+               reset => reset,
+
+               sample_rdata => sample_rdata
        );
          
+
+  sample0: entity work.audio_data
+  port map (
+    clka => clock27,
+    addressa => sample_addr,
+    doa => sample_rdata
+    );
+
+
+  process (clock27) is
+  begin
+    if rising_edge(clock27) then
+      if sample_repeat /= to_integer(sample_repeat_interval) then
+        sample_repeat <= sample_repeat + 1;
+      else
+        sample_repeat <= 0;
+        if sample_addr /= 65535 then
+          sample_addr <= sample_addr + 1;
+        else
+          sample_addr <= 0;
+        end if;
+      end if;
+    end if;
+  end process;
   
-        
+  
 end rtl;
