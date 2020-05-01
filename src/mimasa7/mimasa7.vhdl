@@ -81,7 +81,8 @@ begin
                led => led,
                reset => reset,
 
-               sample_rdata => sample_rdata
+               sample_rdata(7 downto 5) => sample_rdata(7 downto 5),
+               sample_rdata(4 downto 0) => (others => '0')
        );
          
 
