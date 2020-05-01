@@ -137,7 +137,7 @@ Inst_dvid: entity work.dvid PORT MAP(
 
       HDMI_audio_L => audio_L,
       HDMI_audio_R => audio_R,
-      HDMI_LeftEnable => true,
+      HDMI_LeftEnable => sample_ready,
       HDMI_RightEnable => sample_ready,
       
       -- outputs to TMDS drivers
