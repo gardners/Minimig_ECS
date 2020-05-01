@@ -225,7 +225,7 @@ begin
 --        audio_r(12 downto 5) <= sample_rdata_drive and sample_mask;
         audio_l(12 downto 5) <= x"00";
         audio_r(12 downto 5) <= x"00";
-        audio_r(12 downto 9) <= sample_rdata_drive(7 downto 4) and sample_mask(7 downto 4);
+        audio_r(12 downto 10) <= sample_rdata_drive(7 downto 5) and sample_mask(7 downto 5);
         audio_r(15 downto 13) <= (others => sample_rdata_drive(7) and sample_mask(7));
         led <= sample_rdata_drive and sample_mask;
       else
