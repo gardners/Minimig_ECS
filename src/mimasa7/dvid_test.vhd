@@ -21,6 +21,7 @@ entity dvid_test is
          clk_p          : out    std_logic;
          clk_n          : out    std_logic;
          reset : in std_logic;
+         left : in std_logic;
          sample_rdata : in std_logic_vector(15 downto 0);
          clock27 : out std_logic
        );
@@ -221,12 +222,13 @@ begin
       audio_r <= (others => '0');
       led <= (others => '0');
       if dip_sw(0)='1' then
---        audio_l(12 downto 5) <= sample_rdata_drive and sample_mask;
---        audio_r(12 downto 5) <= sample_rdata_drive and sample_mask;
---        audio_l(12 downto 5) <= x"00";
---        audio_r(12 downto 5) <= x"00";
-        audio_r(15 downto 8) <= sample_rdata_drive(15 downto 8) and sample_mask;
-        audio_r(7 downto 0) <= sample_rdata_drive(7 downto 0) and sample_mask;
+        if left='1' then
+          audio_l(15 downto 8) <= sample_rdata_drive(15 downto 8) and sample_mask;
+          audio_l(7 downto 0) <= sample_rdata_drive(7 downto 0) and sample_mask;
+        else
+          audio_r(15 downto 8) <= sample_rdata_drive(15 downto 8) and sample_mask;
+          audio_r(7 downto 0) <= sample_rdata_drive(7 downto 0) and sample_mask;
+        end if;
         led <= sample_rdata_drive(15 downto 8) and sample_mask;
       else
         audio_l(12 downto 5) <= audio_data and sample_mask;

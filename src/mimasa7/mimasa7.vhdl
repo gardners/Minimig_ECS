@@ -60,7 +60,9 @@ architecture RTL of container is
 
   constant clock_frequency : integer := 27000000;
   constant target_sample_rate : integer := 48000;
-  
+
+  signal left : std_logic := '0';
+  signal left_int : std_logic := '0';
   signal sample_addr : integer := 0;
   signal sample_rdata : std_logic_vector(15 downto 0) := x"0000";
   signal sample_repeat : integer := 0;
@@ -80,7 +82,7 @@ begin
                clk_n => hdmi_tx_clk_n,
                led => led,
                reset => reset,
-
+               left => left,
                sample_rdata => sample_rdata
        );
          
@@ -100,9 +102,11 @@ begin
         sample_repeat <= sample_repeat + 1;
       else
         sample_repeat <= 0;
-        if sample_addr /= 65535 then
+        if sample_addr /= 35000 then
           sample_addr <= sample_addr + 1;
         else
+          left_int <= not left_int;
+          left <= left_int;
           sample_addr <= 0;
         end if;
       end if;
