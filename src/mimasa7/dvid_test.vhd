@@ -106,7 +106,7 @@ clocking_inst : entity work.clocking port map (
       clock27 => clock27_int,
       clock41 => clock41,
       clock50 => clock50,
-      clock81 => clock81,
+      clock81p => clock81,
       clock100 => clock100,
       clock135p => clock135p,
       clock135n => clock135n,

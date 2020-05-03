@@ -16,7 +16,8 @@ entity clocking is
       clock27    : out std_logic;
       clock41    : out std_logic;
       clock50    : out std_logic;
-      clock81    : out std_logic;
+      clock81p   : out std_logic;
+      clock81n   : out std_logic;
       clock100   : out std_logic;
       clock135p  : out std_logic;
       clock135n  : out std_logic;
@@ -59,24 +60,24 @@ begin
     CLKOUT1_DUTY_CYCLE   => 0.500,
     CLKOUT1_USE_FINE_PS  => FALSE,
 
-    -- CLKOUT2 = CLK_OUT3 = clock27 ~= 812.5MHz/30
-    CLKOUT2_DIVIDE       => 30,
+    -- CLKOUT2 = CLK_OUT3 = clock81 ~= 812.5MHz/10
+    CLKOUT2_DIVIDE       => 10,
     CLKOUT2_PHASE        => 0.000,
     CLKOUT2_DUTY_CYCLE   => 0.500,
     CLKOUT2_USE_FINE_PS  => FALSE,
-    
+
     -- CLKOUT3 = CLK_OUT4 = clock41 ~= 812.5MHz/20
     CLKOUT3_DIVIDE       => 20,
     CLKOUT3_PHASE        => 0.000,
     CLKOUT3_DUTY_CYCLE   => 0.500,
     CLKOUT3_USE_FINE_PS  => FALSE,
 
-    -- CLKOUT4 = CLK_OUT5 = clock81 ~= 812.5MHz/10
-    CLKOUT4_DIVIDE       => 10,
+    -- CLKOUT4 = CLK_OUT5 = clock27 ~= 812.5MHz/30
+    CLKOUT4_DIVIDE       => 30,
     CLKOUT4_PHASE        => 0.000,
     CLKOUT4_DUTY_CYCLE   => 0.500,
     CLKOUT4_USE_FINE_PS  => FALSE,
-
+    
     -- CLKOUT5 = CLK_OUT6 = clock163 - 812.5MHz/5
     CLKOUT5_DIVIDE       => 5,
     CLKOUT5_PHASE        => 0.0,
@@ -96,9 +97,10 @@ begin
     CLKOUT0             => clock325,
     CLKOUT1             => clock135p,
     CLKOUT1B            => clock135n,
-    CLKOUT2             => clock27,
+    CLKOUT2             => clock81p,
+    CLKOUT2B            => clock81n,
     CLKOUT3             => clock41,
-    CLKOUT4             => clock81,
+    CLKOUT4             => clock27,
     CLKOUT5             => clock163,
     -- Input clock control
     CLKFBIN             => clk_fb,
